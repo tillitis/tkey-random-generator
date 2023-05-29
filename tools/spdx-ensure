@@ -12,6 +12,7 @@ tag="SPDX-License-Identifier:"
 
 missingok_dirs=(
 .github/workflows/
+random-generator/blake2s/
 )
 
 missingok_files=(
@@ -22,8 +23,12 @@ missingok_files=(
 LICENSE
 Makefile
 README.md
-RELEASE.md
-signer/app.bin.sha512
+random-generator/README.md
+go.mod
+go.sum
+gotools/Makefile
+gotools/go.mod
+gotools/go.sum
 )
 
 is_missingok() {
