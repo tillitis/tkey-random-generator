@@ -197,7 +197,7 @@ func (s RandomGen) GetHash() ([]byte, error) {
 		return nil, fmt.Errorf("NewFrameBuf: %w", err)
 	}
 
-	tkeyclient.Dump("GeHash tx", tx)
+	tkeyclient.Dump("GetHash tx", tx)
 	if err = s.tk.Write(tx); err != nil {
 		return nil, fmt.Errorf("Write: %w", err)
 	}
