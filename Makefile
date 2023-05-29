@@ -14,9 +14,6 @@ CFLAGS = -target riscv32-unknown-none-elf -march=rv32iczmmul -mabi=ilp32 -mcmode
    -Wall -Werror=implicit-function-declaration \
    -I $(INCLUDE) -I $(LIBDIR)  \
    -DNODEBUG
-ifneq ($(TKEY_SIGNER_APP_NO_TOUCH),)
-CFLAGS := $(CFLAGS) -DTKEY_SIGNER_APP_NO_TOUCH
-endif
 
 AS = clang
 ASFLAGS = -target riscv32-unknown-none-elf -march=rv32iczmmul -mabi=ilp32 -mcmodel=medany -mno-relax
@@ -48,6 +45,7 @@ FMTFILES=random-generator/*.[ch]
 fmt:
 	clang-format --dry-run --ferror-limit=0 $(FMTFILES)
 	clang-format --verbose -i $(FMTFILES)
+
 .PHONY: checkfmt
 checkfmt:
 	clang-format --dry-run --ferror-limit=0 --Werror $(FMTFILES)
