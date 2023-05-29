@@ -5,10 +5,6 @@ source of high-quality random numbers. The generator is using a
 Hash_DRBG built around the BLAKE2s hash function. The application can
 also sign the random data in order to provide proof of its origin.
 
-## Client Go application
-
-The corresponding client application can be found in `cmd/runrandom`.
-
 ## Application protocol
 
 `Random generator` has a simple protocol on top of the [TKey Framing
@@ -57,14 +53,14 @@ Typical use by a client application:
 2. If firmware is found, load `random`.
 3. Upon receiving the device app digest back from firmware, switch to
    start talking the `random` protocol above.
-4. Send `CMD_GET_RANDOM` to recieve generated random data.
+4. Send `CMD_GET_RANDOM` with wanted number of bytes as argument to
+   retrieve generated random data.
 5. Repeat step 4 until wanted amount of random data is recieved.
 6. Send `CMD_GET_SIG` to calculate and get the signature.
 7. Send `CMD_GET_HASH` to receive the generated hash of the random
    data.
-8. Send `CMD_GET_PUBKEY` to receive the `random`'s public key. If the
-   public key is already stored, check against it so it's the
-   expected key.
+8. Send `CMD_GET_PUBKEY` to receive the    public key. If the public
+   key is already stored, check against it so it's the expected key.
 
 **Please note**: `CMD_GET_SIG` must be sent before `CMD_GET_HASH` in
 order to retrevie the correct hash. The application will return with
@@ -112,23 +108,3 @@ The current set of valid, predefined SPDX identifiers can be found on
 the SPDX License List at:
 
 https://spdx.org/licenses/
-
-
-## Running
-
-Please see the [Developer
-Handbook](https://dev.tillitis.se/tools/#qemu) for [how to run with
-QEMU](https://dev.tillitis.se/tools/#qemu) or [how to run apps on a
-TKey](https://dev.tillitis.se/devapp/#running-tkey-apps) but generally
-to run `random` you either use our
-[runrandom](https://github.com/tillitis/tillitis-key1-apps/cmd/runrandom) or
-you use our development tool
-[tkey-runapp](https://github.com/tillitis/tillitis-key1-apps).
-
-```
-$ ./tkey-runapp apps/random/app.bin
-$ ./runrandom -b 256 -s
-```
-
-Use `--port` if the device port is not automatically detected.
-
