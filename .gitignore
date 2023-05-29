@@ -1,0 +1,7 @@
+*.a
+*.o
+*.bin
+*.elf
+/gotools/golangci-lint
+/gotools/go-winres
+/runrandom
