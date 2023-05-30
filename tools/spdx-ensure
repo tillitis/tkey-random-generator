@@ -23,7 +23,6 @@ missingok_files=(
 LICENSE
 Makefile
 README.md
-random-generator/README.md
 go.mod
 go.sum
 gotools/Makefile
