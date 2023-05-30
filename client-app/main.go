@@ -51,9 +51,9 @@ func main() {
 		"Output random data as binary to `FILE`.")
 	pflag.BoolVarP(&helpOnly, "help", "h", false, "Output this help.")
 	pflag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `runrandom is a client app for the random-app, used to fetch random numbers
-from the TRNG on the Tillitis TKey. This program embeds the random-app binary,
-which it loads onto the USB stick and starts.
+		fmt.Fprintf(os.Stderr, `tkey-random-generator is a client app used to fetch random numbers
+from the TRNG on the Tillitis TKey. This program embeds the random generator-app binary,
+which it loads onto the TKey and starts.
 
 Usage:
 

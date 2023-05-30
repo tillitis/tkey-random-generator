@@ -21,7 +21,7 @@ ASFLAGS = -target riscv32-unknown-none-elf -march=rv32iczmmul -mabi=ilp32 -mcmod
 LDFLAGS=-T $(LIBDIR)/app.lds -L $(LIBDIR)/libcommon/ -lcommon -L $(LIBDIR)/libcrt0/ -lcrt0
 
 .PHONY: all
-all: random-generator/app.bin runrandom
+all: random-generator/app.bin tkey-random-generator
 
 podman:
 	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:2 make -j
@@ -51,16 +51,16 @@ checkfmt:
 	clang-format --dry-run --ferror-limit=0 --Werror $(FMTFILES)
 
 # .PHONY to let go-build handle deps and rebuilds
-.PHONY: runrandom
-runrandom: random-generator/app.bin
+.PHONY: tkey-random-generator
+tkey-random-generator: random-generator/app.bin
 	cp -af random-generator/app.bin client-app/app.bin
-	go build -o runrandom ./client-app
+	go build -o tkey-random-generator ./client-app
 
 
 .PHONY: clean
 clean:
 	rm -f random-generator/app.bin random-generator/app.elf $(RANDOMOBJS) \
-	runrandom client-app/app.bin gotools/golangci-lint
+	tkey-random-generator client-app/app.bin gotools/golangci-lint
 
 
 .PHONY: lint

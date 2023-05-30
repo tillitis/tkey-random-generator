@@ -18,8 +18,8 @@ validate the generated data. This functionality is implemented in
 the provided client application and can be used as an example.
 
 ## Client application
-An client application for the `Random Generator` is provided in Go.
-It embeds the device application and automatically loads it onto the
+A client application, `tkey-random-generator`, is provided in Go. It
+embeds the device application and automatically loads it onto the
 TKey if needed.
 
 ### Usage
@@ -37,7 +37,7 @@ TKey if needed.
 i.e. run
 
 ```
-$ ./runrandom -b 256 -s
+$ ./tkey-random-generator -b 256 -s
 ```
 in order to generate 256 bytes of signed random data.
 

@@ -4,4 +4,4 @@
 *.elf
 /gotools/golangci-lint
 /gotools/go-winres
-/runrandom
+/tkey-random-generator
