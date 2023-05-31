@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ed25519"
 	_ "embed"
 	"errors"
@@ -37,14 +38,14 @@ var le = log.New(os.Stderr, "", 0)
 
 func main() {
 	var devPath, filePath string
-	var speed, bytes int
+	var speed, genBytes int
 	var helpOnly, sig, toFile bool
 	pflag.CommandLine.SortFlags = false
 	pflag.StringVarP(&devPath, "port", "p", "",
 		"Set serial port device `PATH`. If this is not passed, auto-detection will be attempted.")
 	pflag.IntVar(&speed, "speed", tkeyclient.SerialSpeed,
 		"Set serial port speed in `BPS` (bits per second).")
-	pflag.IntVarP(&bytes, "bytes", "b", 0,
+	pflag.IntVarP(&genBytes, "bytes", "b", 0,
 		"Fetch `COUNT` number of random bytes.")
 	pflag.BoolVarP(&sig, "signature", "s", false, "Get the signature of the generated random data.")
 	pflag.StringVarP(&filePath, "file", "f", "",
@@ -67,7 +68,7 @@ Usage:
 		os.Exit(0)
 	}
 
-	if bytes == 0 {
+	if genBytes == 0 {
 		le.Printf("Please set number of bytes with --bytes\n")
 		pflag.Usage()
 		os.Exit(2)
@@ -131,7 +132,7 @@ Usage:
 
 	var totRandom []byte
 
-	left := bytes
+	left := genBytes
 	for {
 		get := left
 		if get > RandomPayloadMaxBytes {
@@ -199,7 +200,7 @@ Usage:
 
 		le.Printf("\nVerifying hash ... ")
 
-		if !testEq(hash, localHash) {
+		if !bytes.Equal(hash, localHash[:]) {
 			le.Printf("hash FAILED verification.\n")
 			exit(1)
 		}
@@ -209,18 +210,6 @@ Usage:
 
 	file.Close()
 	exit(0)
-}
-
-func testEq(a []byte, b [32]byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func handleSignals(action func(), sig ...os.Signal) {
