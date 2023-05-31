@@ -24,8 +24,6 @@ static uint32_t entropy_get()
 	return *trng_entropy;
 }
 
-// Do you really keep the entropy for byte 32-63?
-// Update rng state from digest, lowest 16 bytes + counter.
 static void rng_update(rng_ctx *ctx)
 {
 	for (int i = 0; i < 8; i++) {
@@ -59,7 +57,6 @@ void rng_init(rng_ctx *ctx)
 
 int rng_get(uint32_t *output, rng_ctx *ctx, int size)
 {
-
 	if (size < 1 || rng_initalized == 0) {
 		return -1;
 	}

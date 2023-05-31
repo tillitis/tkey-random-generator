@@ -33,7 +33,6 @@ int main(void)
 	uint8_t cmd[CMDLEN_MAXBYTES];
 	uint8_t rsp[CMDLEN_MAXBYTES];
 	uint8_t in;
-
 	uint32_t digest[32];
 	uint8_t pubkey[32];
 	uint32_t local_cdi[8];
@@ -41,7 +40,6 @@ int main(void)
 	uint8_t hash[32];
 	uint8_t signature_generated = 0;
 	uint8_t rand_data_generated = 0;
-
 	rng_ctx rng_ctx;
 	blake2s_ctx b2s_ctx;
 
@@ -143,7 +141,7 @@ int main(void)
 		case APP_CMD_GET_HASH:
 			qemu_puts("APP_CMD_GET_HASH\n");
 			if (signature_generated == 0) {
-				qemu_puts("Requested hash before siganture is "
+				qemu_puts("Requested hash before signature is "
 					  "generated\n");
 				rsp[0] = STATUS_BAD;
 				appreply(hdr, APP_RSP_GET_HASH, rsp);
