@@ -16,7 +16,6 @@ import (
 	"syscall"
 
 	"github.com/spf13/pflag"
-	"github.com/tillitis/tkey-random-generator/util"
 	"github.com/tillitis/tkeyclient"
 	"golang.org/x/crypto/blake2s"
 )
@@ -76,7 +75,7 @@ Usage:
 
 	if devPath == "" {
 		var err error
-		devPath, err = util.DetectSerialPort(true)
+		devPath, err = tkeyclient.DetectSerialPort(true)
 		if err != nil {
 			os.Exit(1)
 		}

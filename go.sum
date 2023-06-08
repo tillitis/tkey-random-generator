@@ -5,10 +5,8 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
-github.com/tillitis/tkey-random-generator v0.0.0-20230529115247-9dd9fea2283f h1:n2BPchyt9VJfBZLkgwB9RijH+TDjsMr7tckynjF3LIA=
-github.com/tillitis/tkey-random-generator v0.0.0-20230529115247-9dd9fea2283f/go.mod h1:L0amAZWlGwp6yt5yBjHJPuF42pzI1bIwEKiDibofPbs=
-github.com/tillitis/tkeyclient v0.0.0-20230515175551-f6bb10fe1c9d h1:UZsBHWtnqtT+IkTS6WLnj2XaTThMjiOZDR7IzmuojRY=
-github.com/tillitis/tkeyclient v0.0.0-20230515175551-f6bb10fe1c9d/go.mod h1:B/O+T4WWEXDbJ/w7ktWxoZ7GE8+WZDWrw7RJS1xAAYQ=
+github.com/tillitis/tkeyclient v0.0.0-20230607181239-48de67d61ab9 h1:IE3xwhK/i9ysaCn+5F81DpH+OTGMoF9KSWCaaA2sQQI=
+github.com/tillitis/tkeyclient v0.0.0-20230607181239-48de67d61ab9/go.mod h1:LJF9olZ1FL4zIvDY4OoKSp/9YiQY0e8JoKLo0Wg1+Zc=
 go.bug.st/serial v1.5.0 h1:ThuUkHpOEmCVXxGEfpoExjQCS2WBVV4ZcUKVYInM9T4=
 go.bug.st/serial v1.5.0/go.mod h1:UABfsluHAiaNI+La2iESysd9Vetq7VRdpxvjx7CmmOE=
 golang.org/x/crypto v0.9.0 h1:LF6fAI+IutBocDJ2OT0Q1g8plpYljMZ4+lty+dsqw3g=
