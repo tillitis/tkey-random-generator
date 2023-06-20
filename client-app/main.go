@@ -164,28 +164,24 @@ Usage:
 
 	fmt.Printf("\n\n")
 
+	// Always fetch the signature and hash to re-init the hash on the TKey
+	signature, hash, err := randomGen.GetSignature()
+	if err != nil {
+		le.Printf("GetSig failed: %v\n", err)
+		exit(1)
+	}
+
+	// Only print and verify if asked
 	if sig {
-		signature, err := randomGen.GetSignature()
-		if err != nil {
-			le.Printf("GetSig failed: %v\n", err)
-			exit(1)
-		}
-		fmt.Printf("Signature: %x\n", signature)
-
-		// Need to fetch the signature first to get the correct hash.
-		hash, err := randomGen.GetHash()
-		if err != nil {
-			le.Printf("GetHash failed: %v\n", err)
-			exit(1)
-		}
-		fmt.Printf("Hash: %x\n", hash)
-
 		pubkey, err := randomGen.GetPubkey()
 		if err != nil {
 			le.Printf("GetPubkey failed: %v\n", err)
 			exit(1)
 		}
+
 		fmt.Printf("Public key: %x\n", pubkey)
+		fmt.Printf("Signature: %x\n", signature)
+		fmt.Printf("Hash: %x\n", hash)
 
 		le.Print(("\nVerifying signature ... "))
 		if !ed25519.Verify(pubkey, hash, signature) {
@@ -204,7 +200,6 @@ Usage:
 			exit(1)
 		}
 		le.Printf("hash verified.\n")
-
 	}
 
 	file.Close()

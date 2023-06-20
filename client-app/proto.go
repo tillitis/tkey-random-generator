@@ -18,8 +18,6 @@ var (
 	rspGetPubkey      = appCmd{0x06, "rspGetPubkey", tkeyclient.CmdLen128}
 	cmdGetSig         = appCmd{0x07, "cmdGetSig", tkeyclient.CmdLen1}
 	rspCmdSig         = appCmd{0x08, "rspCmdSig", tkeyclient.CmdLen128}
-	cmdGetHash        = appCmd{0x09, "cmdGetHash", tkeyclient.CmdLen1}
-	rspCmdHash        = appCmd{0x0a, "rspCmdHash", tkeyclient.CmdLen128}
 )
 
 // cmdlen - (responsecode + status)
@@ -168,50 +166,24 @@ func (s RandomGen) GetPubkey() ([]byte, error) {
 	return rx[2 : 2+32], nil
 }
 
-func (s RandomGen) GetSignature() ([]byte, error) {
+func (s RandomGen) GetSignature() ([]byte, []byte, error) {
 	id := 2
 	tx, err := tkeyclient.NewFrameBuf(cmdGetSig, id)
 	if err != nil {
-		return nil, fmt.Errorf("NewFrameBuf: %w", err)
+		return nil, nil, fmt.Errorf("NewFrameBuf: %w", err)
 	}
 
 	tkeyclient.Dump("GetSig tx", tx)
 	if err = s.tk.Write(tx); err != nil {
-		return nil, fmt.Errorf("Write: %w", err)
+		return nil, nil, fmt.Errorf("Write: %w", err)
 	}
 
 	rx, _, err := s.tk.ReadFrame(rspCmdSig, id)
 	tkeyclient.Dump("GetSig rx", rx)
 	if err != nil {
-		return nil, fmt.Errorf("ReadFrame: %w", err)
+		return nil, nil, fmt.Errorf("ReadFrame: %w", err)
 	}
 
 	// Skipping frame header & app header
-	return rx[3 : 3+64], nil
-}
-
-func (s RandomGen) GetHash() ([]byte, error) {
-	id := 2
-	tx, err := tkeyclient.NewFrameBuf(cmdGetHash, id)
-	if err != nil {
-		return nil, fmt.Errorf("NewFrameBuf: %w", err)
-	}
-
-	tkeyclient.Dump("GetHash tx", tx)
-	if err = s.tk.Write(tx); err != nil {
-		return nil, fmt.Errorf("Write: %w", err)
-	}
-
-	rx, _, err := s.tk.ReadFrame(rspCmdHash, id)
-	tkeyclient.Dump("GetHash rx", rx)
-	if err != nil {
-		return nil, fmt.Errorf("ReadFrame: %w", err)
-	}
-
-	if rx[2] != 0 {
-		return nil, fmt.Errorf("Return frame NOK")
-	}
-
-	// Skipping frame header & app header
-	return rx[3 : 3+32], nil
+	return rx[3 : 3+64], rx[3+64 : 3+64+32], nil
 }

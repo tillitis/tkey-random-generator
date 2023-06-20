@@ -38,7 +38,6 @@ int main(void)
 	uint32_t local_cdi[8];
 	uint8_t signature[64];
 	uint8_t hash[32];
-	uint8_t signature_generated = 0;
 	uint8_t rand_data_generated = 0;
 	rng_ctx rng_ctx;
 	blake2s_ctx b2s_ctx;
@@ -128,7 +127,6 @@ int main(void)
 			blake2s_update(&b2s_ctx, digest, bytes);
 
 			rand_data_generated = 1;
-			signature_generated = 0;
 
 			break;
 
@@ -136,22 +134,6 @@ int main(void)
 			qemu_puts("APP_CMD_GET_PUBKEY\n");
 			memcpy(rsp, pubkey, 32);
 			appreply(hdr, APP_RSP_GET_PUBKEY, rsp);
-			break;
-
-		case APP_CMD_GET_HASH:
-			qemu_puts("APP_CMD_GET_HASH\n");
-			if (signature_generated == 0) {
-				qemu_puts("Requested hash before signature is "
-					  "generated\n");
-				rsp[0] = STATUS_BAD;
-				appreply(hdr, APP_RSP_GET_HASH, rsp);
-				break;
-			}
-			rsp[0] = STATUS_OK;
-
-			memcpy(rsp + 1, hash, 32);
-			appreply(hdr, APP_RSP_GET_HASH, rsp);
-
 			break;
 
 		case APP_CMD_GET_SIG:
@@ -162,19 +144,21 @@ int main(void)
 				break;
 			}
 			rsp[0] = STATUS_OK;
+
+			// Finalize hash
 			blake2s_final(&b2s_ctx, hash);
 
-			// Add Ed25519 signature to hash
+			// Create the Ed25519 signature of hash
 			crypto_ed25519_sign(signature, (uint8_t *)local_cdi,
 					    pubkey, hash, sizeof(hash));
 
 			memcpy(rsp + 1, signature, 64);
+			memcpy(rsp + 1 + 64, hash, 32);
 			appreply(hdr, APP_RSP_GET_SIG, rsp);
 
 			// Re-init hash for next random generation
 			blake2s_init(&b2s_ctx, 32, NULL, 0);
 			rand_data_generated = 0;
-			signature_generated = 1;
 
 			break;
 

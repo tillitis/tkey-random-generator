@@ -1,4 +1,4 @@
-# Tkey Random Generator
+# TKey Random Generator
 
 The TKey `Random Generator` application is a hardware-based
 source of high-quality random numbers. The generator is using a
@@ -11,7 +11,7 @@ More details about the device application can be found in its README.
 ## Signed Random Data
 The `Random Generator` can sign the produced random data. It uses a
 BLAKE2s hash function to hash the generated random data, which it
-signs using the private key and ed25519.
+signs using the private key and Ed25519.
 
 One can retrieve the hash, public key and signature in order to
 validate the generated data. This functionality is implemented in
@@ -58,16 +58,14 @@ following requests:
 | `CMD_GET_RANDOM`      | 4 B         | 0x03   | Number of bytes, 1 < x < 126        | `RSP_GET_RANDOM`      |
 | `CMD_GET_PUBKEY`      | 1 B         | 0x05   | none                                | `RSP_GET_PUBKEY`      |
 | `CMD_GET_SIG`         | 1 B         | 0x07   | none                                | `RSP_GET_SIG`         |
-| `CMD_GET_HASH`        | 1 B         | 0x09   | none                                | `RSP_GET_HASH`        |
 
 
 | *response*            | *FP length* | *code* | *data*                             |
 |-----------------------|-------------|--------|------------------------------------|
 | `RSP_GET_NAMEVERSION` | 32 B        | 0x02   | 2 * 4 bytes name, version 32 bit LE|
 | `RSP_GET_RANDOM`      | 128 B       | 0x04   | Up to 126 byte of random data      |
-| `RSP_GET_PUBKEY`      | 128 B       | 0x06   | 32 bytes ed25519 public key        |
-| `RSP_GET_SIG`         | 128 B       | 0x08   | 64 bytes ed25519 signature         |
-| `RSP_GET_HASH`        | 128 B       | 0x0a   | 32 bytes hash                      |
+| `RSP_GET_PUBKEY`      | 128 B       | 0x06   | 32 bytes Ed25519 public key        |
+| `RSP_GET_SIG`         | 128 B       | 0x08   | 64B Ed25519 signature + 32B hash   |
 
 | `RSP_UNKNOWN_CMD`     | 1 B         | 0xff   | none                               |
 
@@ -97,15 +95,14 @@ Typical use by a client application:
 4. Send `CMD_GET_RANDOM` with wanted number of bytes as argument to
    generated and retrieve random data.
 5. Repeat step 4 until wanted amount of random data is recieved.
-6. Send `CMD_GET_SIG` to calculate and get the signature.
-7. Send `CMD_GET_HASH` to receive the generated hash of the random
-   data.
+6. Send `CMD_GET_SIG` to calculate and get the signature and hash.
 8. Send `CMD_GET_PUBKEY` to receive the public key. If the public
    key is already stored, check against it so it's the expected TKey.
 
-**Please note**: `CMD_GET_SIG` must be sent before `CMD_GET_HASH` in
-order to retrevie the correct hash. The application will return with
-status `BAD` if `CMD_GET_HASH` is reguested before `CMD_GET_SIG`.
+**Please note**: `CMD_GET_SIG` should always be sent after the last
+random data response is recieved. This is in order to prevent old
+hash data to be include if one fetches more random data without
+reseting the TKey. This is done automatically in the client-app.
 
 **Please note**: The firmware detection mechanism is not by any means
 secure. If in doubt a user should always remove the TKey and insert it
