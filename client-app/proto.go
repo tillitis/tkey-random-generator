@@ -166,6 +166,8 @@ func (s RandomGen) GetPubkey() ([]byte, error) {
 	return rx[2 : 2+32], nil
 }
 
+// GetSignature returns both the signature and the calculated hash
+// over the generated random data.
 func (s RandomGen) GetSignature() ([]byte, []byte, error) {
 	id := 2
 	tx, err := tkeyclient.NewFrameBuf(cmdGetSig, id)
