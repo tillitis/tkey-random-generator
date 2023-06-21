@@ -6,8 +6,6 @@ Hash_DRBG built around the BLAKE2s hash function. The application can
 also sign the generated random data in order to provide proof of its
 origin.
 
-More details about the device application can be found in its README.
-
 ## Signed Random Data
 The `Random Generator` can sign the produced random data. It uses a
 BLAKE2s hash function to hash the generated random data, which it
@@ -60,14 +58,13 @@ following requests:
 | `CMD_GET_SIG`         | 1 B         | 0x07   | none                                | `RSP_GET_SIG`         |
 
 
-| *response*            | *FP length* | *code* | *data*                             |
-|-----------------------|-------------|--------|------------------------------------|
-| `RSP_GET_NAMEVERSION` | 32 B        | 0x02   | 2 * 4 bytes name, version 32 bit LE|
-| `RSP_GET_RANDOM`      | 128 B       | 0x04   | Up to 126 byte of random data      |
-| `RSP_GET_PUBKEY`      | 128 B       | 0x06   | 32 bytes Ed25519 public key        |
-| `RSP_GET_SIG`         | 128 B       | 0x08   | 64B Ed25519 signature + 32B hash   |
-
-| `RSP_UNKNOWN_CMD`     | 1 B         | 0xff   | none                               |
+| *response*            | *FP length* | *code* | *data*                              |
+|-----------------------|-------------|--------|-------------------------------------|
+| `RSP_GET_NAMEVERSION` | 32 B        | 0x02   | 2 * 4 bytes name, version 32 bit LE |
+| `RSP_GET_RANDOM`      | 128 B       | 0x04   | Up to 126 bytes of random data      |
+| `RSP_GET_PUBKEY`      | 128 B       | 0x06   | 32 bytes Ed25519 public key         |
+| `RSP_GET_SIG`         | 128 B       | 0x08   | 64B Ed25519 signature + 32B hash    |
+| `RSP_UNKNOWN_CMD`     | 1 B         | 0xff   | none                                |
 
 | *status replies* | *code* |
 |------------------|--------|
