@@ -11,6 +11,9 @@
 // clang-format off
 static volatile	uint32_t *cdi =          (volatile uint32_t *)TK1_MMIO_TK1_CDI_FIRST;
 static volatile uint32_t *led =          (volatile uint32_t *)TK1_MMIO_TK1_LED;
+static volatile uint32_t *cpu_mon_ctrl  = (volatile uint32_t *) TK1_MMIO_TK1_CPU_MON_CTRL;
+static volatile uint32_t *cpu_mon_first = (volatile uint32_t *) TK1_MMIO_TK1_CPU_MON_FIRST;
+static volatile uint32_t *cpu_mon_last  = (volatile uint32_t *) TK1_MMIO_TK1_CPU_MON_LAST;
 
 #define LED_BLACK  0
 #define LED_RED    (1 << TK1_MMIO_TK1_LED_R_BIT)
@@ -41,6 +44,11 @@ int main(void)
 	uint8_t rand_data_generated = 0;
 	rng_ctx rng_ctx;
 	blake2s_ctx b2s_ctx;
+
+	// Use Execution Monitor on RAM after app
+	*cpu_mon_first = TK1_MMIO_TK1_APP_ADDR + TK1_MMIO_TK1_APP_SIZE;
+	*cpu_mon_last = TK1_RAM_BASE + TK1_RAM_SIZE;
+	*cpu_mon_ctrl = 1;
 
 	qemu_puts("Hello, I'm randomapp! &stack is on: ");
 	qemu_putinthex((uint32_t)&stack);
