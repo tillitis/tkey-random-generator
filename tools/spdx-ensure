@@ -28,6 +28,8 @@ go.sum
 gotools/Makefile
 gotools/go.mod
 gotools/go.sum
+make-release-build-macos.sh
+make-release-build.sh
 )
 
 is_missingok() {

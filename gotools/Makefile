@@ -12,3 +12,10 @@ go-winres:
 	go mod download github.com/tc-hib/go-winres
 	go mod tidy
 	go build github.com/tc-hib/go-winres
+
+# .PHONY to let go-build handle deps and rebuilds
+.PHONY: lipo
+lipo:
+	go mod download github.com/konoui/lipo
+	go mod tidy
+	go build github.com/konoui/lipo

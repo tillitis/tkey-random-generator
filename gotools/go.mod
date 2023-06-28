@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/golangci/golangci-lint v1.52.2
+	github.com/konoui/lipo v0.8.1
 	github.com/tc-hib/go-winres v0.3.1
 )
 
@@ -85,6 +86,7 @@ require (
 	github.com/kisielk/errcheck v1.6.3 // indirect
 	github.com/kisielk/gotool v1.0.0 // indirect
 	github.com/kkHAIKE/contextcheck v1.1.4 // indirect
+	github.com/konoui/go-qsort v0.1.0 // indirect
 	github.com/kulti/thelper v0.6.3 // indirect
 	github.com/kunwardeep/paralleltest v1.0.6 // indirect
 	github.com/kyoh86/exportloopref v0.1.11 // indirect
