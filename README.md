@@ -8,6 +8,15 @@ Hash_DRBG built around the BLAKE2s hash function. The application can
 also sign the generated random data in order to provide proof of its
 origin.
 
+
+## Releases
+[v0.0.1 released
+2023-06-30](https://github.com/tillitis/tkey-random-generator/releases/tag/v0.0.1)
+This release contain the signed random data functionality. The release
+includes pre-built versions for Linux, MacOS (AMD64 and ARM64) as well
+as Windows.
+
+
 ## Signed Random Data
 The `Random Generator` can sign the produced random data. It uses a
 BLAKE2s hash function to hash the generated random data, which it
