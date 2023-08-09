@@ -1,3 +1,5 @@
+[![ci](https://github.com/tillitis/tkey-random-generator/actions/workflows/ci.yaml/badge.svg?event=push)](https://github.com/tillitis/tkey-random-generator/actions/workflows/ci.yaml)
+
 # TKey Random Generator
 
 The TKey `Random Generator` application is a hardware-based
