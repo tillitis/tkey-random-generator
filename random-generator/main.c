@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 
 #include <monocypher/monocypher-ed25519.h>
+#include <qemu_debug.h>
 #include <tk1_mem.h>
 
 #include "app_proto.h"
@@ -41,6 +42,7 @@ int main(void)
 	uint32_t digest[32];
 	uint8_t pubkey[32];
 	uint32_t local_cdi[8];
+	uint8_t secret_key[64];
 	uint8_t signature[64];
 	uint8_t hash[32];
 	uint8_t rand_data_generated = 0;
@@ -58,7 +60,7 @@ int main(void)
 
 	// Generate public key
 	wordcpy(local_cdi, (void *)cdi, 8);
-	crypto_ed25519_public_key(pubkey, (const uint8_t *)local_cdi);
+	crypto_ed25519_key_pair(secret_key, pubkey, (uint8_t *)local_cdi);
 
 	// Initialise the rng
 	rng_init(&rng_ctx);
@@ -159,8 +161,8 @@ int main(void)
 			blake2s_final(&b2s_ctx, hash);
 
 			// Create the Ed25519 signature of hash
-			crypto_ed25519_sign(signature, (uint8_t *)local_cdi,
-					    pubkey, hash, sizeof(hash));
+			crypto_ed25519_sign(signature, secret_key, hash,
+					    sizeof(hash));
 
 			memcpy(rsp + 1, signature, 64);
 			memcpy(rsp + 1 + 64, hash, 32);

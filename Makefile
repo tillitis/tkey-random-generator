@@ -18,7 +18,7 @@ CFLAGS = -target riscv32-unknown-none-elf -march=rv32iczmmul -mabi=ilp32 -mcmode
 AS = clang
 ASFLAGS = -target riscv32-unknown-none-elf -march=rv32iczmmul -mabi=ilp32 -mcmodel=medany -mno-relax
 
-LDFLAGS=-T $(LIBDIR)/app.lds -L $(LIBDIR)/libcommon/ -lcommon -L $(LIBDIR)/libcrt0/ -lcrt0
+LDFLAGS=-T $(LIBDIR)/app.lds -L $(LIBDIR) -lcommon -lcrt0
 
 .PHONY: all
 all: random-generator/app.bin tkey-random-generator
@@ -35,7 +35,7 @@ podman:
 # Random number generator app
 RANDOMOBJS=random-generator/main.o random-generator/app_proto.o random-generator/rng.o random-generator/blake2s/blake2s.o
 random-generator/app.elf: $(RANDOMOBJS)
-	$(CC) $(CFLAGS) $(RANDOMOBJS) $(LDFLAGS) -L $(LIBDIR)/monocypher -lmonocypher -o $@
+	$(CC) $(CFLAGS) $(RANDOMOBJS) $(LDFLAGS) -L $(LIBDIR) -lmonocypher -o $@
 $(RANDOMOBJS): $(INCLUDE)/tk1_mem.h random-generator/app_proto.h random-generator/rng.h random-generator/blake2s/blake2s.h
 
 # Uses ../.clang-format

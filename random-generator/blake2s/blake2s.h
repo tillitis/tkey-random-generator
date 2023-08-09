@@ -6,16 +6,14 @@
 
 #include <types.h>
 
-// Already defined in types.h
-
-// // state context
-// typedef struct {
-// 	uint8_t b[64]; // input buffer
-// 	uint32_t h[8]; // chained state
-// 	uint32_t t[2]; // total number of bytes
-// 	size_t c;      // pointer for b[]
-// 	size_t outlen; // digest size
-// } blake2s_ctx;
+// state context
+typedef struct {
+	uint8_t b[64]; // input buffer
+	uint32_t h[8]; // chained state
+	uint32_t t[2]; // total number of bytes
+	size_t c;      // pointer for b[]
+	size_t outlen; // digest size
+} blake2s_ctx;
 
 // Initialize the hashing context "ctx" with optional key "key".
 //      1 <= outlen <= 32 gives the digest size in bytes.
