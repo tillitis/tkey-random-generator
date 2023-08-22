@@ -8,7 +8,7 @@
 typedef struct {
 	uint32_t ctr;
 	uint32_t state[16];
-	uint32_t digest[32];
+	uint32_t digest[8];
 } rng_ctx;
 
 void rng_init(rng_ctx *ctx);
