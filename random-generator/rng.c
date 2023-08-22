@@ -31,14 +31,19 @@ static void rng_update(rng_ctx *ctx)
 		ctx->state[i] = ctx->digest[i];
 	}
 
-	ctx->ctr += 1;
-	ctx->state[15] += ctx->ctr;
+	ctx->state_ctr_lsb += 1;
+	if (ctx->state_ctr_lsb == 0) {
+		ctx->state_ctr_msb += 1;
+	}
+	ctx->state[14] += ctx->state_ctr_msb;
+	ctx->state[15] += ctx->state_ctr_lsb;
 
-	if (ctx->ctr == RESEED_TIME) {
+	ctx->reseed_ctr += 1;
+	if (ctx->reseed_ctr == RESEED_TIME) {
 		for (int i = 0; i < 8; i++) {
 			ctx->state[i + 8] = entropy_get();
 		}
-		ctx->ctr = 0;
+		ctx->reseed_ctr = 0;
 	}
 }
 
@@ -51,7 +56,10 @@ void rng_init(rng_ctx *ctx)
 		ctx->state[i + 8] = entropy_get();
 	}
 
-	ctx->ctr = 0;
+	ctx->state_ctr_lsb = entropy_get();
+	ctx->state_ctr_msb = entropy_get();
+
+	ctx->reseed_ctr = 0;
 
 	rng_initalized = 1;
 }

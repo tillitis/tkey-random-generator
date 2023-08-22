@@ -6,7 +6,9 @@
 
 // state context
 typedef struct {
-	uint32_t ctr;
+	uint32_t state_ctr_lsb;
+	uint32_t state_ctr_msb;
+	uint32_t reseed_ctr;
 	uint32_t state[16];
 	uint32_t digest[8];
 } rng_ctx;
