@@ -9,13 +9,9 @@ also sign the generated random data in order to provide proof of its
 origin.
 
 
-## Releases
-[v0.0.1 released
-2023-06-30](https://github.com/tillitis/tkey-random-generator/releases/tag/v0.0.1)
-This release contain the signed random data functionality. The release
-includes pre-built versions for Linux, MacOS (AMD64 and ARM64) as well
-as Windows.
-
+It is always recommended to use the lastest release, find it
+[here](https://github.com/tillitis/tkey-random-generator/releases/)
+along with pre-compiled binaries.
 
 ## Signed Random Data
 The `Random Generator` can sign the produced random data. It uses a
