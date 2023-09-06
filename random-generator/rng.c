@@ -61,6 +61,11 @@ void rng_init(rng_ctx *ctx)
 
 	ctx->reseed_ctr = 0;
 
+	// Perform initial mixing of state.
+	blake2s_ctx b2s_ctx;
+	blake2s(ctx->digest, 32, NULL, 0, ctx->state, 64, &b2s_ctx);
+	rng_update(ctx);
+
 	rng_initalized = 1;
 }
 
