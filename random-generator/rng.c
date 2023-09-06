@@ -13,7 +13,7 @@ static volatile	uint32_t *cdi =          (volatile uint32_t *)TK1_MMIO_TK1_CDI_F
 static volatile uint32_t *trng_status  = (volatile uint32_t *)TK1_MMIO_TRNG_STATUS;
 static volatile uint32_t *trng_entropy = (volatile uint32_t *)TK1_MMIO_TRNG_ENTROPY;
 
-#define RESEED_TIME 1000
+#define RESEED_TIME 4096
 // clang-format on
 
 uint8_t rng_initalized = 0;
