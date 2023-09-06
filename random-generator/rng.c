@@ -52,7 +52,7 @@ void rng_init(rng_ctx *ctx)
 	qemu_puts("Init rng state\n");
 
 	for (int i = 0; i < 8; i++) {
-		ctx->state[i] = cdi[i];
+		ctx->state[i] = cdi[i] + entropy_get();
 		ctx->state[i + 8] = entropy_get();
 	}
 
