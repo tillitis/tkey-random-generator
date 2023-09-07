@@ -17,6 +17,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/tillitis/tkeyclient"
+	"github.com/tillitis/tkeyutil"
 	"golang.org/x/crypto/blake2s"
 )
 
@@ -36,9 +37,9 @@ const (
 var le = log.New(os.Stderr, "", 0)
 
 func main() {
-	var devPath, filePath string
+	var fileUSS, devPath, filePath string
 	var speed, genBytes int
-	var helpOnly, sig, toFile bool
+	var enterUSS, helpOnly, sig, toFile bool
 	pflag.CommandLine.SortFlags = false
 	pflag.StringVarP(&devPath, "port", "p", "",
 		"Set serial port device `PATH`. If this is not passed, auto-detection will be attempted.")
@@ -50,6 +51,11 @@ func main() {
 	pflag.StringVarP(&filePath, "file", "f", "",
 		"Output random data as binary to `FILE`.")
 	pflag.BoolVarP(&helpOnly, "help", "h", false, "Output this help.")
+	pflag.BoolVar(&enterUSS, "uss", false,
+		"Enable typing of a phrase to be hashed as the User Supplied Secret. The USS is loaded onto the TKey along with the app itself. A different USS results in different Compound Device Identifier, different start of the random sequence, and another key pair used for signing.")
+	pflag.StringVar(&fileUSS, "uss-file", "",
+		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
+
 	pflag.Usage = func() {
 		fmt.Fprintf(os.Stderr, `tkey-random-generator is a client app used to fetch random numbers
 from the TRNG on the Tillitis TKey. This program embeds the random generator-app binary,
@@ -91,6 +97,12 @@ Usage:
 		}
 	}
 
+	if enterUSS && fileUSS != "" {
+		le.Printf("Pass only one of --uss or --uss-file.\n\n")
+		pflag.Usage()
+		os.Exit(2)
+	}
+
 	tkeyclient.SilenceLogging()
 
 	tk := tkeyclient.New()
@@ -110,11 +122,30 @@ Usage:
 	handleSignals(func() { exit(1) }, os.Interrupt, syscall.SIGTERM)
 
 	if isFirmwareMode(tk) {
-		le.Printf("Device is in firmware mode. Loading app...\n")
-		if err := tk.LoadApp(appBinary, []byte{}); err != nil {
-			le.Printf("LoadApp failed: %v", err)
+		var secret []byte
+		var err error
+
+		if enterUSS {
+			secret, err = tkeyutil.InputUSS()
+			if err != nil {
+				le.Printf("InputUSS: %v\n", err)
+				os.Exit(1)
+			}
+		}
+		if fileUSS != "" {
+			secret, err = tkeyutil.ReadUSS(fileUSS)
+			if err != nil {
+				le.Printf("ReadUSS: %v\n", err)
+				os.Exit(1)
+			}
+		}
+
+		if err := tk.LoadApp(appBinary, secret); err != nil {
+			le.Printf("LoadApp failed: %v\n", err)
 			exit(1)
 		}
+	} else if enterUSS || fileUSS != "" {
+		le.Printf("Warning: App already loaded. Use of USS not possible. Continuing with already loaded app...\n")
 	}
 
 	if !isWantedApp(randomGen) {
