@@ -39,7 +39,7 @@ var le = log.New(os.Stderr, "", 0)
 func main() {
 	var fileUSS, devPath, filePath string
 	var speed, genBytes int
-	var enterUSS, helpOnly, sig, toFile bool
+	var enterUSS, helpOnly, sig bool
 	pflag.CommandLine.SortFlags = false
 	pflag.StringVarP(&devPath, "port", "p", "",
 		"Set serial port device `PATH`. If this is not passed, auto-detection will be attempted.")
@@ -86,16 +86,6 @@ Usage:
 			os.Exit(1)
 		}
 	}
-	var file *os.File
-	var fileErr error
-	if filePath != "" {
-		toFile = true
-		file, fileErr = os.Create(filePath)
-		if fileErr != nil {
-			le.Printf("Could not create file %s: %v\n", filePath, fileErr)
-			os.Exit(1)
-		}
-	}
 
 	if enterUSS && fileUSS != "" {
 		le.Printf("Pass only one of --uss or --uss-file.\n\n")
@@ -121,31 +111,10 @@ Usage:
 	}
 	handleSignals(func() { exit(1) }, os.Interrupt, syscall.SIGTERM)
 
-	if isFirmwareMode(tk) {
-		var secret []byte
-		var err error
-
-		if enterUSS {
-			secret, err = tkeyutil.InputUSS()
-			if err != nil {
-				le.Printf("InputUSS: %v\n", err)
-				os.Exit(1)
-			}
-		}
-		if fileUSS != "" {
-			secret, err = tkeyutil.ReadUSS(fileUSS)
-			if err != nil {
-				le.Printf("ReadUSS: %v\n", err)
-				os.Exit(1)
-			}
-		}
-
-		if err := tk.LoadApp(appBinary, secret); err != nil {
-			le.Printf("LoadApp failed: %v\n", err)
-			exit(1)
-		}
-	} else if enterUSS || fileUSS != "" {
-		le.Printf("Warning: App already loaded. Use of USS not possible. Continuing with already loaded app...\n")
+	err := loadApp(tk, enterUSS, fileUSS)
+	if err != nil {
+		le.Printf("Couldn't load app: %v", err)
+		exit(1)
 	}
 
 	if !isWantedApp(randomGen) {
@@ -154,46 +123,11 @@ Usage:
 		exit(1)
 	}
 
-	if !toFile {
-		le.Printf("Random data follows on stdout...\n\n")
-	} else {
-		le.Printf("Writing random data to: %s\n", filePath)
+	totRandom, err := genRandomData(randomGen, genBytes, filePath)
+	if err != nil {
+		le.Printf("Couldn't generate random data: %v\n", err)
+		exit(1)
 	}
-
-	var totRandom []byte
-
-	left := genBytes
-	for {
-		get := left
-		if get > RandomPayloadMaxBytes {
-			get = RandomPayloadMaxBytes
-		}
-		random, err := randomGen.GetRandom(get)
-		if err != nil {
-			le.Printf("GetRandom failed: %v\n", err)
-			exit(1)
-		}
-		totRandom = append(totRandom, random...)
-
-		if toFile {
-			_, err := file.Write(random)
-			if err != nil {
-				le.Printf("Error could not write to file %v\n", err)
-				exit(1)
-			}
-		} else {
-			fmt.Printf("%x", random)
-		}
-
-		if left > len(random) {
-
-			left -= len(random)
-			continue
-		}
-		break
-	}
-
-	fmt.Printf("\n\n")
 
 	// Always fetch the signature and hash to re-init the hash on the TKey
 	signature, hash, err := randomGen.GetSignature()
@@ -233,7 +167,6 @@ Usage:
 		le.Printf("hash verified.\n")
 	}
 
-	file.Close()
 	exit(0)
 }
 
@@ -272,4 +205,87 @@ func isWantedApp(randomGen RandomGen) bool {
 	// not caring about nameVer.Version
 	return nameVer.Name0 == wantAppName0 &&
 		nameVer.Name1 == wantAppName1
+}
+
+func loadApp(tk *tkeyclient.TillitisKey, enterUSS bool, fileUSS string) error {
+	if isFirmwareMode(tk) {
+		var secret []byte
+		var err error
+
+		if enterUSS {
+			secret, err = tkeyutil.InputUSS()
+			if err != nil {
+				return fmt.Errorf("InputUSS: %w", err)
+			}
+		}
+		if fileUSS != "" {
+			secret, err = tkeyutil.ReadUSS(fileUSS)
+			if err != nil {
+				return fmt.Errorf("ReadUSS: %w", err)
+			}
+		}
+
+		if err := tk.LoadApp(appBinary, secret); err != nil {
+			return fmt.Errorf("LoadApp failed: %w", err)
+		}
+	} else if enterUSS || fileUSS != "" {
+		le.Printf("Warning: App already loaded. Use of USS not possible. Continuing with already loaded app...\n")
+	}
+
+	return nil
+}
+
+func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, error) {
+	var totRandom []byte
+	var file *os.File
+	var fileErr error
+	var toFile bool
+
+	if filePath != "" {
+		toFile = true
+		file, fileErr = os.Create(filePath)
+		if fileErr != nil {
+			return nil, fmt.Errorf("Could not create file %s: %w", filePath, fileErr)
+		}
+	}
+
+	if !toFile {
+		le.Printf("Random data follows on stdout...\n\n")
+	} else {
+		le.Printf("Writing random data to: %s\n", filePath)
+	}
+
+	left := genBytes
+	for {
+		get := left
+		if get > RandomPayloadMaxBytes {
+			get = RandomPayloadMaxBytes
+		}
+		random, err := randomGen.GetRandom(get)
+		if err != nil {
+			return nil, fmt.Errorf("GetRandom failed: %w", err)
+		}
+		totRandom = append(totRandom, random...)
+
+		if toFile {
+			_, err := file.Write(random)
+			if err != nil {
+				return nil, fmt.Errorf("Error could not write to file %w", err)
+			}
+		} else {
+			fmt.Printf("%x", random)
+		}
+
+		if left > len(random) {
+			left -= len(random)
+			continue
+		}
+		break
+	}
+
+	fmt.Printf("\n\n")
+
+	file.Close()
+
+	return totRandom, nil
 }
