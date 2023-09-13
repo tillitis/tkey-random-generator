@@ -7,8 +7,8 @@
 //======================================================================
 
 #include "blake2s.h"
-#include <lib.h>
-#include <types.h>
+#include <stdint.h>
+#include <stddef.h>
 
 // Dummy printf() for verbose mode
 static void printf(const char *format, ...)
