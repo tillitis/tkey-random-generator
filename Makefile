@@ -36,7 +36,7 @@ podman:
 RANDOMOBJS=random-generator/main.o random-generator/app_proto.o random-generator/rng.o random-generator/blake2s/blake2s.o
 random-generator/app.elf: $(RANDOMOBJS)
 	$(CC) $(CFLAGS) $(RANDOMOBJS) $(LDFLAGS) -L $(LIBDIR) -lmonocypher -o $@
-$(RANDOMOBJS): $(INCLUDE)/tk1_mem.h random-generator/app_proto.h random-generator/rng.h random-generator/blake2s/blake2s.h
+$(RANDOMOBJS): $(INCLUDE)/tkey/tk1_mem.h random-generator/app_proto.h random-generator/rng.h random-generator/blake2s/blake2s.h
 
 # Uses ../.clang-format
 FMTFILES=random-generator/*.[ch]
