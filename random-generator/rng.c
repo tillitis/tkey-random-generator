@@ -1,10 +1,10 @@
 // Copyright (C) 2022, 2023 - Tillitis AB
 // SPDX-License-Identifier: GPL-2.0-only
 
-#include <blake2s.h>
-#include <lib.h>
-#include <qemu_debug.h>
-#include <tk1_mem.h>
+#include <tkey/blake2s.h>
+#include <tkey/lib.h>
+#include <tkey/qemu_debug.h>
+#include <tkey/tk1_mem.h>
 
 #include "rng.h"
 
