@@ -7,12 +7,14 @@ import (
 	"bytes"
 	"crypto/ed25519"
 	_ "embed"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/spf13/pflag"
@@ -37,69 +39,190 @@ const (
 var le = log.New(os.Stderr, "", 0)
 
 func main() {
-	var fileUSS, devPath, filePath string
+	var fileUSS, devPath, filePath, fileRandData, fileSignature, filePubkey string
 	var speed, genBytes int
-	var enterUSS, helpOnly, sig bool
-	pflag.CommandLine.SortFlags = false
-	pflag.StringVarP(&devPath, "port", "p", "",
-		"Set serial port device `PATH`. If this is not passed, auto-detection will be attempted.")
-	pflag.IntVar(&speed, "speed", tkeyclient.SerialSpeed,
-		"Set serial port speed in `BPS` (bits per second).")
-	pflag.IntVarP(&genBytes, "bytes", "b", 0,
-		"Fetch `COUNT` number of random bytes.")
-	pflag.BoolVarP(&sig, "signature", "s", false, "Get the signature of the generated random data.")
-	pflag.StringVarP(&filePath, "file", "f", "",
-		"Output random data as binary to `FILE`.")
-	pflag.BoolVarP(&helpOnly, "help", "h", false, "Output this help.")
-	pflag.BoolVar(&enterUSS, "uss", false,
-		"Enable typing of a phrase to be hashed as the User Supplied Secret. The USS is loaded onto the TKey along with the app itself. A different USS results in different Compound Device Identifier, different start of the random sequence, and another key pair used for signing.")
-	pflag.StringVar(&fileUSS, "uss-file", "",
-		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
+	var enterUSS, helpOnlyGen, helpOnlyVerify, shouldSign, isBinary bool
 
-	pflag.Usage = func() {
-		fmt.Fprintf(os.Stderr, `tkey-random-generator is a client app used to fetch random numbers
-from the TRNG on the Tillitis TKey. This program embeds the random generator-app binary,
+	genString := "generate"
+	verifyString := "verify"
+
+	// Default flags to show
+	root := pflag.NewFlagSet("root", pflag.ExitOnError)
+	root.Usage = func() {
+		desc := fmt.Sprintf(`%[1]s fetches random numbers from the TRNG on the
+Tillitis' TKey. This program embeds the random generator-app binary,
 which it loads onto the TKey and starts.
 
+The generated data can be signed with an Ed25519 private key. See more
+information under the subcommand "generate".
+
+It is also possible to verify previously generated random data,
+by providing the signature, random data, and public key. Verification
+can be performed without a TKey connected. See more information under
+the subcommand "verify".
+
 Usage:
+  %[1]s <command> [flags] FILE...
 
-%s`,
-			pflag.CommandLine.FlagUsagesWrapped(80))
+Commands:
+  generate    Generate random data
+  verify      Verify signature of previously generated data
+
+Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
+		le.Printf("%s\n\n%s", desc,
+			root.FlagUsagesWrapped(86))
 	}
-	pflag.Parse()
 
-	if helpOnly {
-		pflag.Usage()
-		os.Exit(0)
+	// Flag for command "generate"
+	cmdGen := pflag.NewFlagSet(genString, pflag.ExitOnError)
+	cmdGen.SortFlags = false
+	cmdGen.StringVarP(&devPath, "port", "p", "",
+		"Set serial port device `PATH`. If this is not passed, auto-detection will be attempted.")
+	cmdGen.IntVar(&speed, "speed", tkeyclient.SerialSpeed,
+		"Set serial port speed in `BPS` (bits per second).")
+	cmdGen.IntVarP(&genBytes, "bytes", "b", 0,
+		"Fetch `COUNT` number of random bytes.")
+	cmdGen.BoolVarP(&shouldSign, "signature", "s", false, "Get the signature of the generated random data.")
+	cmdGen.StringVarP(&filePath, "file", "f", "",
+		"Output random data as binary to `FILE`.")
+	cmdGen.BoolVarP(&helpOnlyGen, "help", "h", false, "Output this help.")
+	cmdGen.BoolVar(&enterUSS, "uss", false,
+		"Enable typing of a phrase to be hashed as the User Supplied Secret. The USS is loaded onto the TKey along with the app itself. A different USS results in different Compound Device Identifier, different start of the random sequence, and another key pair used for signing.")
+	cmdGen.StringVar(&fileUSS, "uss-file", "",
+		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
+
+	cmdGen.Usage = func() {
+		desc := fmt.Sprintf(`Usage %[1]s generate -b BYTES [-s] [--uss] [flags..]
+
+  Generates amount of data specified with --bytes and optionally makes a signature
+  to make it possible to provide proof of its origin. To make it possible the
+  generated random data is first hashed using BLAKE2s, and then signed with and
+  Ed25519 private key.
+
+  Output can be chosen between stdout (hex) and a binary file.
+
+  Usage:`, os.Args[0])
+		le.Printf("%s\n\n%s", desc,
+			cmdGen.FlagUsagesWrapped(80))
 	}
 
-	if genBytes == 0 {
-		le.Printf("Please set number of bytes with --bytes\n")
-		pflag.Usage()
+	// Flag for command "verify"
+	cmdVerify := pflag.NewFlagSet(verifyString, pflag.ExitOnError)
+	cmdVerify.SortFlags = false
+	cmdVerify.BoolVarP(&isBinary, "binary", "b", false, "Specify if the input FILE is in binary format.")
+	cmdVerify.BoolVarP(&helpOnlyVerify, "help", "h", false, "Output this help.")
+	cmdVerify.Usage = func() {
+		desc := fmt.Sprintf(`Usage: %[1]s verify FILE SIG-FILE PUBKEY-FILE [-b]
+
+  Verifies whether the Ed25519 signature of the message is valid.
+  Does not need a connected TKey to verify.
+
+  First the message, FILE, is hashed using BLAKE2s, then the signature
+  is verified with the message and the public key.
+
+  FILE is either a binary or a hex representation of the random data.
+  SIG-FILE is expected to be an 64 bytes Ed25519 signature in hex.
+  PUBKEY-FILE is expected to be an 32 bytes Ed25519 public key in hex.
+
+  The return value is 0 if the signature is valid, otherwise non-zero.
+  Newlines will be striped from the input files. `, os.Args[0])
+		le.Printf("%s\n\n%s", desc,
+			cmdVerify.FlagUsagesWrapped(86))
+	}
+
+	// No arguments, print and exit
+	if len(os.Args) == 1 {
+		root.Usage()
 		os.Exit(2)
 	}
+
+	switch os.Args[1] {
+	case genString:
+		if err := cmdGen.Parse(os.Args[2:]); err != nil {
+			le.Printf("Error parsing input arguments: %v\n", err)
+			os.Exit(2)
+		}
+
+		if helpOnlyGen {
+			cmdGen.Usage()
+			os.Exit(0)
+		}
+
+		if enterUSS && fileUSS != "" {
+			le.Printf("Pass only one of --uss or --uss-file.\n\n")
+			pflag.Usage()
+			os.Exit(2)
+		}
+
+		if genBytes == 0 {
+			le.Printf("Please set number of bytes with --bytes\n")
+			cmdGen.Usage()
+			os.Exit(2)
+		}
+
+		err := generate(devPath, enterUSS, fileUSS, speed, genBytes, filePath, shouldSign)
+		if err != nil {
+			le.Printf("Error generating random data: %v\n", err)
+			os.Exit(1)
+		}
+
+		os.Exit(0)
+	case verifyString:
+		if err := cmdVerify.Parse(os.Args[2:]); err != nil {
+			le.Printf("Error parsing input arguments: %v\n", err)
+			os.Exit(2)
+		}
+
+		if helpOnlyVerify {
+			cmdVerify.Usage()
+			os.Exit(0)
+		}
+
+		if cmdVerify.NArg() < 3 {
+			le.Printf("Missing %d input file(s) to verify signature.\n\n", 3-cmdVerify.NArg())
+			cmdVerify.Usage()
+			os.Exit(2)
+		} else if cmdVerify.NArg() > 3 {
+			le.Printf("Unexpected argument: %s\n\n", strings.Join(cmdVerify.Args()[3:], " "))
+			cmdVerify.Usage()
+			os.Exit(2)
+		}
+		fileRandData = cmdVerify.Args()[0]
+		fileSignature = cmdVerify.Args()[1]
+		filePubkey = cmdVerify.Args()[2]
+
+		le.Printf("Verifying signature ...\n")
+		if err := verifySignature(fileRandData, fileSignature, filePubkey, isBinary); err != nil {
+			le.Printf("Error verifying: %v\n", err)
+			os.Exit(1)
+		}
+		le.Printf("Signature verified.\n")
+
+		os.Exit(0)
+	default:
+		root.Usage()
+		le.Printf("%q is not a valid subcommand.\n", os.Args[1])
+		os.Exit(2)
+	}
+	os.Exit(1) // should never be reached
+}
+
+// subcommand to generate random data
+func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes int, filePath string, shouldSign bool) error {
+	tkeyclient.SilenceLogging()
 
 	if devPath == "" {
 		var err error
 		devPath, err = tkeyclient.DetectSerialPort(true)
 		if err != nil {
-			os.Exit(1)
+			return fmt.Errorf("DetectSerialPort: %w", err)
 		}
 	}
-
-	if enterUSS && fileUSS != "" {
-		le.Printf("Pass only one of --uss or --uss-file.\n\n")
-		pflag.Usage()
-		os.Exit(2)
-	}
-
-	tkeyclient.SilenceLogging()
 
 	tk := tkeyclient.New()
 	le.Printf("Connecting to device on serial port %s...\n", devPath)
 	if err := tk.Connect(devPath, tkeyclient.WithSpeed(speed)); err != nil {
-		le.Printf("Could not open %s: %v\n", devPath, err)
-		os.Exit(1)
+		return fmt.Errorf("could not open %s: %w", devPath, err)
 	}
 
 	randomGen := New(tk)
@@ -110,38 +233,33 @@ Usage:
 		os.Exit(code)
 	}
 	handleSignals(func() { exit(1) }, os.Interrupt, syscall.SIGTERM)
+	defer randomGen.Close()
 
 	err := loadApp(tk, enterUSS, fileUSS)
 	if err != nil {
-		le.Printf("Couldn't load app: %v", err)
-		exit(1)
+		return fmt.Errorf("couldn't load app: %w", err)
 	}
 
 	if !isWantedApp(randomGen) {
-		fmt.Printf("The TKey may already be running an app, but not the expected random-app.\n" +
-			"Please unplug and plug it in again.\n")
-		exit(1)
+		return fmt.Errorf("the TKey may already be running an app, but not the expected. Please unplug and plug it in again")
 	}
 
 	totRandom, err := genRandomData(randomGen, genBytes, filePath)
 	if err != nil {
-		le.Printf("Couldn't generate random data: %v\n", err)
-		exit(1)
+		return fmt.Errorf("genRandomData failed: %w", err)
 	}
 
 	// Always fetch the signature and hash to re-init the hash on the TKey
 	signature, hash, err := randomGen.GetSignature()
 	if err != nil {
-		le.Printf("GetSig failed: %v\n", err)
-		exit(1)
+		return fmt.Errorf("GetSig failed: %w", err)
 	}
 
 	// Only print and verify if asked
-	if sig {
+	if shouldSign {
 		pubkey, err := randomGen.GetPubkey()
 		if err != nil {
-			le.Printf("GetPubkey failed: %v\n", err)
-			exit(1)
+			return fmt.Errorf("GetPubkey failed: %w", err)
 		}
 
 		fmt.Printf("Public key: %x\n", pubkey)
@@ -150,24 +268,19 @@ Usage:
 
 		le.Print(("\nVerifying signature ... "))
 		if !ed25519.Verify(pubkey, hash, signature) {
-			le.Printf("signature FAILED verification.\n")
-			// Don't exit, let's calculate hash
-		} else {
-			le.Printf("signature verified.\n")
+			return fmt.Errorf("signature FAILED verification")
 		}
-
-		localHash := blake2s.Sum256(totRandom)
+		le.Printf("signature verified.\n")
 
 		le.Printf("\nVerifying hash ... ")
-
-		if !bytes.Equal(hash, localHash[:]) {
-			le.Printf("hash FAILED verification.\n")
-			exit(1)
+		errHash := verifyHash(hash, totRandom)
+		if errHash != nil {
+			return fmt.Errorf("hash FAILED verification: %w", errHash)
 		}
 		le.Printf("hash verified.\n")
 	}
 
-	exit(0)
+	return nil
 }
 
 func handleSignals(action func(), sig ...os.Signal) {
@@ -235,6 +348,7 @@ func loadApp(tk *tkeyclient.TillitisKey, enterUSS bool, fileUSS string) error {
 	return nil
 }
 
+// genRandomData fetches genBytes bytes of random data and either prints to a file or stdout
 func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, error) {
 	var totRandom []byte
 	var file *os.File
@@ -245,14 +359,14 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, 
 		toFile = true
 		file, fileErr = os.Create(filePath)
 		if fileErr != nil {
-			return nil, fmt.Errorf("Could not create file %s: %w", filePath, fileErr)
+			return nil, fmt.Errorf("could not create file %s: %w", filePath, fileErr)
 		}
 	}
 
 	if !toFile {
 		le.Printf("Random data follows on stdout...\n\n")
 	} else {
-		le.Printf("Writing random data to: %s\n", filePath)
+		le.Printf("Writing %d bytes of random data to: %s\n", genBytes, filePath)
 	}
 
 	left := genBytes
@@ -270,7 +384,7 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, 
 		if toFile {
 			_, err := file.Write(random)
 			if err != nil {
-				return nil, fmt.Errorf("Error could not write to file %w", err)
+				return nil, fmt.Errorf("error could not write to file %w", err)
 			}
 		} else {
 			fmt.Printf("%x", random)
@@ -288,4 +402,82 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, 
 	file.Close()
 
 	return totRandom, nil
+}
+
+// fileInputToHex reads inputFile and returns a trimmed slice decoded to hex.
+func fileInputToHex(inputFile string) ([]byte, error) {
+	input, err := os.ReadFile(inputFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not read %s: %w", inputFile, err)
+	}
+
+	input = bytes.Trim(input, "\n")
+	hexOutput := make([]byte, hex.DecodedLen(len(input)))
+	_, err = hex.Decode(hexOutput, input)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode: %w", err)
+	}
+	return hexOutput, nil
+}
+
+// verifySignature verifies a Ed25519 signature from input files of message, signature and public key
+func verifySignature(fileRandData string, fileSignature string, filePubkey string, isBinary bool) error {
+	signature, err := fileInputToHex(fileSignature)
+	if err != nil {
+		return fmt.Errorf("fileInputToHex failed: %w", err)
+	}
+
+	if len(signature) != 64 {
+		return fmt.Errorf("invalid length of signature. Expected 64 bytes, got %d bytes", len(signature))
+	}
+
+	pubkey, err := fileInputToHex(filePubkey)
+	if err != nil {
+		return fmt.Errorf("fileInputToHex failed: %w", err)
+	}
+
+	if len(pubkey) != 32 {
+		return fmt.Errorf("invalid length of public key. Expected 32 bytes, got %d bytes", len(pubkey))
+	}
+
+	fmt.Printf("Public key: %x\n", pubkey)
+	fmt.Printf("Signature: %x\n", signature)
+
+	var message []byte
+	if isBinary {
+
+		message, err = os.ReadFile(fileRandData)
+		if err != nil {
+			return fmt.Errorf("could not read %s: %w", fileRandData, err)
+		}
+	} else {
+		message, err = fileInputToHex(fileRandData)
+		if err != nil {
+			return fmt.Errorf("fileInputToHex failed: %w", err)
+		}
+	}
+
+	digest := doHash(message)
+	le.Printf("BLAKE2s hash: %x\n", digest)
+
+	if !ed25519.Verify(pubkey, digest[:], signature) {
+		return fmt.Errorf("signature not valid")
+	}
+
+	return nil
+}
+
+// verifyHash returns error if the hash and raw data hashed is not equal
+func verifyHash(hash []byte, randomData []byte) error {
+	localHash := doHash(randomData)
+
+	if !bytes.Equal(hash, localHash[:]) {
+		return fmt.Errorf("hash not equal")
+	}
+	return nil
+}
+
+// doHash returns a blake2s hash of input
+func doHash(data []byte) [32]byte {
+	return blake2s.Sum256(data)
 }
