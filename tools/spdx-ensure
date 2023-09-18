@@ -32,6 +32,7 @@ gotools/go.sum
 make-release-build-macos.sh
 make-release-build.sh
 random-generator/app.bin.sha512
+build.sh
 )
 
 is_missingok() {

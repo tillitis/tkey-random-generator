@@ -127,19 +127,38 @@ again before doing any operation.
 You have two options for build tools: either use our OCI image
 `ghcr.io/tillitis/tkey-builder` or native tools.
 
-In either case, you need the device libraries in a directory next to
-this one. The device libraries are available in:
-
-https://github.com/tillitis/tkey-libs
-
-Clone and build the device libraries first. You will most likely want
-to specify a release with something like `-b v0.0.1`:
+With native tools you should be able to use our build script:
 
 ```
-$ git clone -b v0.0.1 --depth 1 https://github.com/tillitis/tkey-libs
+$ ./build.sh
+```
+
+which also clones and builds the TKey device
+libraries: https://github.com/tillitis/tkey-libs
+
+If you want to do it manually please inspect the build script, but
+basically you clone `tkey-libs` next to this folder, build it, and
+then build this application using `make`
+
+Something like this:
+
+```
+$ git clone -b v0.0.2 --depth 1 https://github.com/tillitis/tkey-libs
 $ cd tkey-libs
 $ make
 ```
+
+navigate back to this folder and run:
+
+```
+make
+```
+
+If you cloned `tkey-libs` to somewhere else then the default, set
+`LIBDIR` to the path of the directory.
+
+Please see [Tools & libraries](https://dev.tillitis.se/tools/) in the Development Handbook
+for detailed information on the currently supported build and development environment.
 
 ### Building with Podman
 
@@ -159,29 +178,6 @@ apt install podman rootlesskit slirp4netns
 ```
 
 should be enough to get you a working Podman setup.
-
-### Building with native tools
-
-To build with native tools you need at least the `clang`, `llvm`,
-`lld`, packages installed. Version 15 or later of LLVM/Clang is for
-support of our architecture (RV32\_Zmmul). Ubuntu 22.10 (Kinetic) is
-known to have this. Please see
-[toolchain_setup.md](https://github.com/tillitis/tillitis-key1/blob/main/doc/toolchain_setup.md)
-(in the tillitis-key1 repository) for detailed information on the
-currently supported build and development environment.
-
-Build everything:
-
-```
-$ make
-```
-
-If you cloned `tkey-libs` to somewhere else then the default, set
-`LIBDIR` to the path of the directory.
-
-If your available `objcopy` is anything other than the default
-`llvm-objcopy`, then define `OBJCOPY` to whatever they're called on
-your system.
 
 ## Licenses and SPDX tags
 
