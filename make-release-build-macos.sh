@@ -4,6 +4,10 @@ cat <<EOF
 Note that it is your responsibility that the code that is built as a specific
 version comes from a clean version tag.
 
+Specify version of the release to build, and what tkey-libs tag to use when invoking this script.
+
+Use as "./make-release-build-macos.sh <verison_name_of_release> <tkey_libs_tag>
+
 Use to build macos targets.
 
 Requires tkey-libs to be cloned next to this top folder.
@@ -23,6 +27,9 @@ if ! hash 2>/dev/null sha512sum; then
   }
 fi
 
+tkey_libs_version="$1"
+shift
+
 # look for tkey-libs
 if [ ! -e ../tkey-libs ]; then
   printf "Could not find tkey-libs.\n"
@@ -31,6 +38,7 @@ fi
 
 # build a fresh tkey-libs
 make -C ../tkey-libs clean
+cd ../tkey-libs && git checkout "$tkey_libs_version" && cd ../tkey-random-generator
 make -C ../tkey-libs podman
 
 # build application binary using podman
