@@ -20,8 +20,16 @@ ASFLAGS = -target riscv32-unknown-none-elf -march=rv32iczmmul -mabi=ilp32 -mcmod
 
 LDFLAGS=-T $(LIBDIR)/app.lds -L $(LIBDIR) -lcommon -lcrt0
 
+# Check for OS, if not macos assume linux
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	shasum = shasum -a 512
+else
+	shasum = sha512sum
+endif
+
 .PHONY: all
-all: random-generator/app.bin tkey-random-generator
+all: random-generator/app.bin tkey-random-generator check-hash
 
 podman:
 	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:2 make -j
@@ -31,6 +39,9 @@ podman:
 %.bin: %.elf
 	$(OBJCOPY) --input-target=elf32-littleriscv --output-target=binary $^ $@
 	chmod a-x $@
+
+check-hash: random-generator/app.bin
+	cd random-generator && $(shasum) -c app.bin.sha512
 
 # Random number generator app
 RANDOMOBJS=random-generator/main.o random-generator/app_proto.o random-generator/rng.o random-generator/blake2s/blake2s.o
