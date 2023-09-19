@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: tillitis/tkey-libs
-          ref: main
+          ref: v0.0.2
           path: tkey-libs
 
       - name: fix
