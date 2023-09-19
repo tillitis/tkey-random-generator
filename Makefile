@@ -64,14 +64,14 @@ checkfmt:
 # .PHONY to let go-build handle deps and rebuilds
 .PHONY: tkey-random-generator
 tkey-random-generator: random-generator/app.bin
-	cp -af random-generator/app.bin client-app/app.bin
-	go build -o tkey-random-generator ./client-app
+	cp -af random-generator/app.bin cmd/tkey-random-generator/app.bin
+	go build -o tkey-random-generator ./cmd/tkey-random-generator
 
 
 .PHONY: clean
 clean:
 	rm -f random-generator/app.bin random-generator/app.elf $(RANDOMOBJS) \
-	tkey-random-generator client-app/app.bin gotools/golangci-lint
+	tkey-random-generator cmd/tkey-random-generator/app.bin gotools/golangci-lint
 
 
 .PHONY: lint

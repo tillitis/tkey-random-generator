@@ -1,4 +1,4 @@
-module client-app
+module tkey-random-generator
 
 go 1.20
 
