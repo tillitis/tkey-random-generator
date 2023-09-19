@@ -6,13 +6,19 @@ version comes from a clean version tag.
 
 Specify version of the release to build, and what tkey-libs tag to use when invoking this script.
 
-Use as "./make-release-build-macos.sh <verison_name_of_release> <tkey_libs_tag>
+Use as "./make-release-build-macos.sh <version_name_of_release> <tkey_libs_tag>
 
 Use to build macos targets.
 
 Requires tkey-libs to be cloned next to this top folder.
 
 EOF
+
+if [ "$#" -ne 2 ]
+then
+  echo "Please supply both release_version and tkey_libs_tag"
+  exit 1
+fi
 
 version="$1"
 if [ -z "$version" ]; then
