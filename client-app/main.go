@@ -276,18 +276,17 @@ func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes
 		fmt.Printf("Signature: %x\n", signature)
 		fmt.Printf("Hash: %x\n", hash)
 
+		// Do we compute the same hash digest as random-generator did?
+		errHash := verifyHash(hash, totRandom)
+		if errHash != nil {
+			return fmt.Errorf("hash FAILED verification: %w", errHash)
+		}
+
 		le.Print(("\nVerifying signature ... "))
 		if !ed25519.Verify(pubkey, hash, signature) {
 			return fmt.Errorf("signature FAILED verification")
 		}
 		le.Printf("signature verified.\n")
-
-		le.Printf("\nVerifying hash ... ")
-		errHash := verifyHash(hash, totRandom)
-		if errHash != nil {
-			return fmt.Errorf("hash FAILED verification: %w", errHash)
-		}
-		le.Printf("hash verified.\n")
 	}
 
 	return nil
