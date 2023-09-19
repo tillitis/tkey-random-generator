@@ -38,23 +38,65 @@ embeds the device application and automatically loads it onto the
 TKey if needed.
 
 ### Usage
+
 ```
-  -p, --port PATH     Set serial port device PATH. If this is not passed,
-                      auto-detection will be attempted.
-      --speed BPS     Set serial port speed in BPS (bits per second).
-                      (default 62500)
-  -b, --bytes COUNT   Fetch COUNT number of random bytes.
-  -s, --signature     Get the signature of the generated random data.
-  -f, --file FILE     Output random data as binary to FILE.
-  -h, --help          Output this help.
-  ```
+tkey-random-generator <command> [flags] FILE...
+```
+where the commands are
+```
+  generate    Generate random data
+  verify      Verify signature of previously generated data
+```
+
+Usage for `generate` command
+
+```
+tkey-random-generator generate <bytes> [-s] [--uss] [flags..]
+```
+with the flags
+
+```
+  -p, --port PATH       Set serial port device PATH. If this is not
+                        passed, auto-detection will be attempted.
+      --speed BPS       Set serial port speed in BPS (bits per second).
+                        (default 62500)
+  -s, --signature       Get the signature of the generated random data.
+  -f, --file FILE       Output random data as binary to FILE.
+  -h, --help            Output this help.
+      --uss             Enable typing of a phrase to be hashed as the User
+                        Supplied Secret. The USS is loaded onto the TKey
+                        along with the app itself. A different USS results
+                        in different Compound Device Identifier, different
+                        start of the random sequence, and another key pair
+                        used for signing.
+      --uss-file FILE   Read FILE and hash its contents as the USS. Use
+                        '-' (dash) to read from stdin. The full contents
+                        are hashed unmodified (e.g. newlines are not stripped).
+```
+
+Usage for `verify` command
+```
+tkey-random-generator verify FILE SIG-FILE PUBKEY-FILE [-b]
+```
+with flags
+```
+  -b, --binary   Specify if the input FILE is in binary format.
+  -h, --help     Output this help.
+```
 
 i.e. run
 
 ```
-$ ./tkey-random-generator -b 256 -s
+$ tkey-random-generator generate 256 -s
 ```
 in order to generate 256 bytes of signed random data.
+
+Store the random data, the signature and the public key printed and run
+
+```
+$ tkey-random-generator verify random_data_file signature_file public_key_file
+```
+in ordet to verify previosuly generated data.
 
 Please see the [Developer
 Handbook](https://dev.tillitis.se/tools/#qemu) for [how to run with

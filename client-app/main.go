@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -80,8 +81,6 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 		"Set serial port device `PATH`. If this is not passed, auto-detection will be attempted.")
 	cmdGen.IntVar(&speed, "speed", tkeyclient.SerialSpeed,
 		"Set serial port speed in `BPS` (bits per second).")
-	cmdGen.IntVarP(&genBytes, "bytes", "b", 0,
-		"Fetch `COUNT` number of random bytes.")
 	cmdGen.BoolVarP(&shouldSign, "signature", "s", false, "Get the signature of the generated random data.")
 	cmdGen.StringVarP(&filePath, "file", "f", "",
 		"Output random data as binary to `FILE`.")
@@ -92,12 +91,11 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
 
 	cmdGen.Usage = func() {
-		desc := fmt.Sprintf(`Usage %[1]s generate -b BYTES [-s] [--uss] [flags..]
+		desc := fmt.Sprintf(`Usage %[1]s generate <bytes> [-s] [--uss] [flags..]
 
-  Generates amount of data specified with --bytes and optionally makes a signature
-  to make it possible to provide proof of its origin. To make it possible the
-  generated random data is first hashed using BLAKE2s, and then signed with and
-  Ed25519 private key.
+  Generates amount of data specified with <bytes> and optionally create a signature
+  to make it possible to provide proof of the origin. The generated random data is
+  first hashed using BLAKE2s, and then signed with and Ed25519 private key.
 
   Output can be chosen between stdout (hex) and a binary file.
 
@@ -154,13 +152,25 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 			os.Exit(2)
 		}
 
-		if genBytes == 0 {
-			le.Printf("Please set number of bytes with --bytes\n")
+		if cmdGen.NArg() < 1 {
+			le.Printf("Bytes to generate required.\n\n")
+			cmdGen.Usage()
+			os.Exit(2)
+		} else if cmdGen.NArg() > 1 {
+			le.Printf("Unexpected argument: %s\n\n", strings.Join(os.Args[3:], " "))
 			cmdGen.Usage()
 			os.Exit(2)
 		}
 
-		err := generate(devPath, enterUSS, fileUSS, speed, genBytes, filePath, shouldSign)
+		var err error
+		genBytes, err = strconv.Atoi(cmdGen.Args()[0])
+		if err != nil {
+			le.Printf("Argument needs to be integer.\n\n")
+			cmdGen.Usage()
+			os.Exit(2)
+		}
+
+		err = generate(devPath, enterUSS, fileUSS, speed, genBytes, filePath, shouldSign)
 		if err != nil {
 			le.Printf("Error generating random data: %v\n", err)
 			os.Exit(1)
