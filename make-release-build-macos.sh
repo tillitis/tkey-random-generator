@@ -55,7 +55,7 @@ podman run --rm --mount type=bind,source="$(pwd)",target=/src --mount \
         type=bind,source="$(pwd)/../tkey-libs",target=/tkey-libs -w /src \
         -it ghcr.io/tillitis/tkey-builder:2 make random-generator/app.bin -j
 
-cp -af random-generator/app.bin client-app/app.bin
+cp -af random-generator/app.bin cmd/tkey-random-generator/app.bin
 
 targets="darwin"
 printf "Will build for: %s\n" "$targets"
@@ -63,7 +63,7 @@ printf "Will build for: %s\n" "$targets"
 outd="release-builds"
 mkdir -p "$outd"
 
-cmd="client-app"
+cmd="cmd/tkey-random-generator"
 exec_name="tkey-random-generator"
 
 if [ -e buildall ]; then
