@@ -18,6 +18,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/dustin/go-humanize"
 	"github.com/spf13/pflag"
 	"github.com/tillitis/tkeyclient"
 	"github.com/tillitis/tkeyutil"
@@ -42,7 +43,7 @@ var le = log.New(os.Stderr, "", 0)
 func main() {
 	var fileUSS, devPath, filePath, fileRandData, fileSignature, filePubkey string
 	var speed, genBytes int
-	var enterUSS, helpOnlyGen, helpOnlyVerify, shouldSign, isBinary bool
+	var enterUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary bool
 
 	genString := "generate"
 	verifyString := "verify"
@@ -89,7 +90,7 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 		"Enable typing of a phrase to be hashed as the User Supplied Secret. The USS is loaded onto the TKey along with the app itself. A different USS results in different Compound Device Identifier, different start of the random sequence, and another key pair used for signing.")
 	cmdGen.StringVar(&fileUSS, "uss-file", "",
 		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
-
+	cmdGen.BoolVarP(&verbose, "verbose", "v", false, "Be more verbose")
 	cmdGen.Usage = func() {
 		desc := fmt.Sprintf(`Usage %[1]s generate <bytes> [-s] [--uss] [flags..]
 
@@ -170,7 +171,7 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 			os.Exit(2)
 		}
 
-		err = generate(devPath, enterUSS, fileUSS, speed, genBytes, filePath, shouldSign)
+		err = generate(devPath, enterUSS, fileUSS, speed, genBytes, filePath, shouldSign, verbose)
 		if err != nil {
 			le.Printf("Error generating random data: %v\n", err)
 			os.Exit(1)
@@ -218,7 +219,7 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 }
 
 // subcommand to generate random data
-func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes int, filePath string, shouldSign bool) error {
+func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes int, filePath string, shouldSign bool, verbose bool) error {
 	tkeyclient.SilenceLogging()
 
 	if devPath == "" {
@@ -254,7 +255,7 @@ func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes
 		return fmt.Errorf("the TKey may already be running an app, but not the expected. Please unplug and plug it in again")
 	}
 
-	totRandom, err := genRandomData(randomGen, genBytes, filePath)
+	totRandom, err := genRandomData(randomGen, genBytes, filePath, verbose)
 	if err != nil {
 		return fmt.Errorf("genRandomData failed: %w", err)
 	}
@@ -358,7 +359,7 @@ func loadApp(tk *tkeyclient.TillitisKey, enterUSS bool, fileUSS string) error {
 }
 
 // genRandomData fetches genBytes bytes of random data and either prints to a file or stdout
-func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, error) {
+func genRandomData(randomGen RandomGen, genBytes int, filePath string, verbose bool) ([]byte, error) {
 	var totRandom []byte
 	var file *os.File
 	var fileErr error
@@ -375,10 +376,18 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, 
 	if !toFile {
 		le.Printf("Random data follows on stdout...\n\n")
 	} else {
-		le.Printf("Writing %d bytes of random data to: %s\n", genBytes, filePath)
+		le.Printf("Writing %s of random data to: %s\n", humanize.Bytes(uint64(genBytes)), filePath)
 	}
 
 	left := genBytes
+	progressCnt := 0
+	progressIncrements := genBytes / 10
+	if progressIncrements > 50000 {
+		progressIncrements = 50000 // max steps of 50 kB for progress prints
+	}
+	if progressIncrements < 256 {
+		progressIncrements = 256
+	}
 	for {
 		get := left
 		if get > RandomPayloadMaxBytes {
@@ -395,6 +404,17 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, 
 			if err != nil {
 				return nil, fmt.Errorf("error could not write to file %w", err)
 			}
+
+			if verbose {
+				// Print progress when writing to file
+				progressCnt += len(random)
+				if progressCnt > progressIncrements {
+					fmt.Printf("\n%.1f%% \t [%s / %s]", float32(len(totRandom)*100)/float32(genBytes),
+						humanize.Bytes(uint64(len(totRandom))), humanize.Bytes(uint64(genBytes)))
+					progressCnt = 0
+				}
+			}
+
 		} else {
 			fmt.Printf("%x", random)
 		}
@@ -406,7 +426,11 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string) ([]byte, 
 		break
 	}
 
-	fmt.Printf("\n\n")
+	if verbose {
+		fmt.Printf("\n%.1f%% \t [%s / %s]\n\n", float32(len(totRandom)*100)/float32(genBytes), humanize.Bytes(uint64(len(totRandom))), humanize.Bytes(uint64(genBytes)))
+	} else {
+		fmt.Printf("\n\n")
+	}
 
 	file.Close()
 

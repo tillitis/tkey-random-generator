@@ -65,6 +65,11 @@ Output can be chosen between stdout (in hexadecimal) or a binary file.
 	Read FILE and hash its contents as the USS. Use '-' (dash) to read
 	from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).
 
+*--verbose*
+
+	Be more verbose, including reporting progress when writing to
+	a file.
+
 ## verify
 
 *tkey-random-generator* verify FILE SIG-FILE PUBKEY-FILE [-b] [common
