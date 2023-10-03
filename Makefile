@@ -24,12 +24,30 @@ LDFLAGS=-T $(LIBDIR)/app.lds -L $(LIBDIR) -lcommon -lcrt0
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	shasum = shasum -a 512
+	BUILD_CGO_ENABLED ?= 1
 else
 	shasum = sha512sum
+	BUILD_CGO_ENABLED ?= 0
 endif
 
 .PHONY: all
 all: random-generator/app.bin tkey-random-generator check-hash doc/tkey-random-generator.1
+
+DESTDIR=/
+PREFIX=/usr/local
+destbin=$(DESTDIR)/$(PREFIX)/bin
+destman1=$(DESTDIR)/$(PREFIX)/share/man/man1
+.PHONY: install
+install:
+	install -Dm755 tkey-random-generator $(destbin)/tkey-random-generator
+	strip $(destbin)/tkey-random-generator
+	install -Dm644 doc/tkey-random-generator.1 $(destman1)/tkey-random-generator.1
+	gzip -n9f $(destman1)/tkey-random-generator.1
+.PHONY: uninstall
+uninstall:
+	rm -f \
+	$(destbin)/tkey-random-generator \
+	$(destman1)/tkey-random-generator.1.gz
 
 podman:
 	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:2 make -j
@@ -61,11 +79,13 @@ fmt:
 checkfmt:
 	clang-format --dry-run --ferror-limit=0 --Werror $(FMTFILES)
 
+TKEY_RANDOM_GENERATOR_VERSION ?= $(shell git describe --dirty --always | sed -n "s/^v\(.*\)/\1/p")
+
 # .PHONY to let go-build handle deps and rebuilds
 .PHONY: tkey-random-generator
 tkey-random-generator: random-generator/app.bin
 	cp -af random-generator/app.bin cmd/tkey-random-generator/app.bin
-	go build -o tkey-random-generator ./cmd/tkey-random-generator
+	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -o tkey-random-generator ./cmd/tkey-random-generator
 
 
 doc/tkey-random-generator.1: doc/tkey-random-generator.scd

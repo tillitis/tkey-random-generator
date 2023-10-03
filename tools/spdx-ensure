@@ -13,6 +13,7 @@ tag="SPDX-License-Identifier:"
 missingok_dirs=(
 .github/workflows/
 random-generator/blake2s/
+debian/
 )
 
 missingok_files=(
