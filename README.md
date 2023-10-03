@@ -46,6 +46,9 @@ where the commands are
 ```
   generate    Generate random data
   verify      Verify signature of previously generated data
+
+  Flags:
+      --version   Output version information.
 ```
 
 Usage for `generate` command
@@ -72,6 +75,7 @@ with the flags
       --uss-file FILE   Read FILE and hash its contents as the USS. Use
                         '-' (dash) to read from stdin. The full contents
                         are hashed unmodified (e.g. newlines are not stripped).
+  -v, --verbose         Be more verbose
 ```
 
 Usage for `verify` command

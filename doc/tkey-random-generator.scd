@@ -23,6 +23,10 @@ Common options for both commands:
 
 	Output help text.
 
+*--version*
+
+	Output version information and quit.
+
 # COMMANDS
 
 ## generate

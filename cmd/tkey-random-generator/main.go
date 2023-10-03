@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
@@ -40,16 +41,23 @@ const (
 
 var le = log.New(os.Stderr, "", 0)
 
+var version string
+
 func main() {
 	var fileUSS, devPath, filePath, fileRandData, fileSignature, filePubkey string
 	var speed, genBytes int
-	var enterUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary bool
+	var enterUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary, versionOnly bool
 
 	genString := "generate"
 	verifyString := "verify"
 
+	if version == "" {
+		version = readBuildInfo()
+	}
+
 	// Default flags to show
 	root := pflag.NewFlagSet("root", pflag.ExitOnError)
+	root.BoolVar(&versionOnly, "version", false, "Output version information.")
 	root.Usage = func() {
 		desc := fmt.Sprintf(`%[1]s fetches random numbers from the TRNG on the
 Tillitis' TKey. This program embeds the random generator-app binary,
@@ -70,8 +78,10 @@ Commands:
   generate    Generate random data
   verify      Verify signature of previously generated data
 
-Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
-		le.Printf("%s\n\n%s", desc,
+Use <command> --help for further help, i.e. %[1]s verify --help
+
+Flags:`, os.Args[0])
+		le.Printf("%s\n%s", desc,
 			root.FlagUsagesWrapped(86))
 	}
 
@@ -133,6 +143,18 @@ Use <command> --help for further help, i.e. %[1]s verify --help`, os.Args[0])
 	if len(os.Args) == 1 {
 		root.Usage()
 		os.Exit(2)
+	}
+
+	// version? Print and exit
+	if len(os.Args) == 2 {
+		if err := root.Parse(os.Args); err != nil {
+			le.Printf("Error parsing input arguments: %v\n", err)
+			os.Exit(2)
+		}
+		if versionOnly {
+			fmt.Printf("tkey-random-generator %s\n", version)
+			os.Exit(0)
+		}
 	}
 
 	switch os.Args[1] {
@@ -513,4 +535,19 @@ func verifyHash(hash []byte, randomData []byte) error {
 // doHash returns a blake2s hash of input
 func doHash(data []byte) [32]byte {
 	return blake2s.Sum256(data)
+}
+
+func readBuildInfo() string {
+	version := "devel without BuildInfo"
+	if info, ok := debug.ReadBuildInfo(); ok {
+		sb := strings.Builder{}
+		sb.WriteString("devel")
+		for _, setting := range info.Settings {
+			if strings.HasPrefix(setting.Key, "vcs") {
+				sb.WriteString(fmt.Sprintf(" %s=%s", setting.Key, setting.Value))
+			}
+		}
+		version = sb.String()
+	}
+	return version
 }
