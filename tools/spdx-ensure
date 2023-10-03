@@ -24,6 +24,8 @@ LICENSE
 Makefile
 README.md
 RELEASE.md
+doc/tkey-random-generator.1
+doc/tkey-random-generator.scd
 go.mod
 go.sum
 gotools/Makefile

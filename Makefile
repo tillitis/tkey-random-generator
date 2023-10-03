@@ -29,7 +29,7 @@ else
 endif
 
 .PHONY: all
-all: random-generator/app.bin tkey-random-generator check-hash
+all: random-generator/app.bin tkey-random-generator check-hash doc/tkey-random-generator.1
 
 podman:
 	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:2 make -j
@@ -67,6 +67,9 @@ tkey-random-generator: random-generator/app.bin
 	cp -af random-generator/app.bin cmd/tkey-random-generator/app.bin
 	go build -o tkey-random-generator ./cmd/tkey-random-generator
 
+
+doc/tkey-random-generator.1: doc/tkey-random-generator.scd
+	scdoc < $^ > $@ 
 
 .PHONY: clean
 clean:
