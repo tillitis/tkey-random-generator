@@ -15,9 +15,8 @@ periodically reseeded using the TKey True Random Number Generator
 One unique feature is the ability to provide a cryptographic signature
 of the data generated. Since the keypair used for signing is based on
 the UDS, the application, and any USS supplied, a user verifying the
-signature can trust that the received data is fresh (if using a USS
-not used before), has not been tampered with, and was generated on the
-TKey by the application loaded.
+signature can trust that the received data was generated on the TKey
+by the application loaded and has not been tampered with since.
 
 It is always recommended to use [the latest
 release](https://github.com/tillitis/tkey-random-generator/releases/)).
@@ -32,8 +31,8 @@ the hash digest using Ed25519 with the private key.
 
 `tkey-random-generator` will then print out the random data, the
 public key, the signature, and the hash digest of the data. It will
-compute the hash digest over the random data to see verify it's the
-same and then attempt to verify the signature.
+compute the hash digest over the random data to verify it's the same
+and then attempt to verify the signature.
 
 Use the `verify` command if you want to verify the signature on the
 random data at a later time. See below.
