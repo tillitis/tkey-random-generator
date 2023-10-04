@@ -4,6 +4,8 @@
 #ifndef RNG_H
 #define RNG_H
 
+#include <stdint.h>
+
 // state context
 typedef struct {
 	uint32_t state_ctr_lsb;
