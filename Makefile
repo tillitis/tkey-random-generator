@@ -31,7 +31,7 @@ else
 endif
 
 .PHONY: all
-all: random-generator/app.bin tkey-random-generator check-hash doc/tkey-random-generator.1
+all: random-generator/app.bin tkey-random-generator check-hash
 
 DESTDIR=/
 PREFIX=/usr/local
@@ -89,7 +89,7 @@ tkey-random-generator: random-generator/app.bin
 
 
 doc/tkey-random-generator.1: doc/tkey-random-generator.scd
-	scdoc < $^ > $@ 
+	scdoc < $^ > $@
 
 .PHONY: clean
 clean:
