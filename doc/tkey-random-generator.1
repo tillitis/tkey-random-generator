@@ -5,7 +5,7 @@
 .nh
 .ad l
 .\" Begin generated content:
-.TH "tkey" "1" "2023-10-03"
+.TH "tkey-random-generator" "1" "2023-10-04"
 .P
 .SH NAME
 .P
@@ -129,6 +129,47 @@ Specify if the input FILE is in binary format.\&
 Output this help.\&
 .P
 .RE
+.SH CONFIGURATION
+.P
+You must have read and write access to the USB serial port TKey
+provides.\& On platforms like macOS and Windows this happens
+automatically when you approve the TKey device.\& Under Linux one way to
+get access as your ordinary user is by installing a udev rule like
+this:
+.P
+.nf
+.RS 4
+# Mark Tillitis TKey as a security token\&. /usr/lib/udev/rules\&.d/70-uaccess\&.rules
+# will add TAG "uaccess", which will result in file ACLs so that local user
+# (see loginctl) can read/write to the serial port in /dev\&.
+ATTRS{idVendor}=="1207", ATTRS{idProduct}=="8887",
+ENV{ID_SECURITY_TOKEN}="1"
+.fi
+.RE
+.P
+Put this in \fB/etc/udev/rules.\&d/60-tkey.\&rules\fR and run \fBudevadm control --reload\fR
+which should make the TKey device (typically \fB/dev/ttyACM0\fR) availabe
+to anyone logged in on the console (see \fBloginctl\fR).\&
+.P
+Another way to get access is by becoming a member of the group that
+owns serial ports on some systems with default udev rules for USB CDC
+ACM devices that come and go.\& On Ubuntu that group is \fBdialout\fR.\& You
+can do it like this:
+.P
+.nf
+.RS 4
+$ id -un
+exampleuser
+$ ls -l /dev/ttyACM0
+crw-rw---- 1 root dialout 166, 0 Sep 16 08:20 /dev/ttyACM0
+$ sudo usermod -a -G dialout exampleuser
+.fi
+.RE
+.P
+For the change to take effect, you need to either log out and login
+again or run the command \fBnewgrp dialout\fR in the terminal that you are
+working in.\&
+.P
 .SH EXAMPLES
 .P
 Generate signed random data in a binary file and ask for a User

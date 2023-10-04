@@ -1,4 +1,4 @@
-tkey(1)
+tkey-random-generator(1)
 
 # NAME
 
@@ -99,6 +99,43 @@ Options:
 *-h, --help*
 
 	Output this help.
+
+# CONFIGURATION
+
+You must have read and write access to the USB serial port TKey
+provides. On platforms like macOS and Windows this happens
+automatically when you approve the TKey device. Under Linux one way to
+get access as your ordinary user is by installing a udev rule like
+this:
+
+```
+# Mark Tillitis TKey as a security token. /usr/lib/udev/rules.d/70-uaccess.rules
+# will add TAG "uaccess", which will result in file ACLs so that local user
+# (see loginctl) can read/write to the serial port in /dev.
+ATTRS{idVendor}=="1207", ATTRS{idProduct}=="8887",\
+ENV{ID_SECURITY_TOKEN}="1"
+```
+
+Put this in */etc/udev/rules.d/60-tkey.rules* and run *udevadm control --reload*
+which should make the TKey device (typically */dev/ttyACM0*) availabe
+to anyone logged in on the console (see *loginctl*).
+
+Another way to get access is by becoming a member of the group that
+owns serial ports on some systems with default udev rules for USB CDC
+ACM devices that come and go. On Ubuntu that group is *dialout*. You
+can do it like this:
+
+```
+$ id -un
+exampleuser
+$ ls -l /dev/ttyACM0
+crw-rw---- 1 root dialout 166, 0 Sep 16 08:20 /dev/ttyACM0
+$ sudo usermod -a -G dialout exampleuser
+```
+
+For the change to take effect, you need to either log out and login
+again or run the command *newgrp dialout* in the terminal that you are
+working in.
 
 # EXAMPLES
 
