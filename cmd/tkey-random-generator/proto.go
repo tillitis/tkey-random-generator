@@ -86,19 +86,12 @@ func (s RandomGen) GetAppNameVersion() (*tkeyclient.NameVersion, error) {
 		return nil, fmt.Errorf("Write: %w", err)
 	}
 
-	err = s.tk.SetReadTimeout(2)
-	if err != nil {
-		return nil, fmt.Errorf("SetReadTimeout: %w", err)
-	}
+	defer s.tk.SetReadTimeoutNoErr(0)
+	s.tk.SetReadTimeoutNoErr(2)
 
 	rx, _, err := s.tk.ReadFrame(rspGetNameVersion, id)
 	if err != nil {
 		return nil, fmt.Errorf("ReadFrame: %w", err)
-	}
-
-	err = s.tk.SetReadTimeout(0)
-	if err != nil {
-		return nil, fmt.Errorf("SetReadTimeout: %w", err)
 	}
 
 	nameVer := &tkeyclient.NameVersion{}
