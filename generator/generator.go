@@ -4,10 +4,26 @@
 package generator
 
 import (
+	_ "embed"
+	"errors"
 	"fmt"
+	"io"
 
 	"github.com/tillitis/tkeyclient"
 )
+
+const (
+	wantFWName0  = "tk1 "
+	wantFWName1  = "mkdf"
+	wantAppName0 = "tk1 "
+	wantAppName1 = "rand"
+)
+
+// nolint:typecheck // Avoid lint error when the embedding file is missing.
+// Makefile copies the built app here ./app.bin
+//
+//go:embed app.bin
+var appBinary []byte
 
 var (
 	cmdGetNameVersion = appCmd{0x01, "cmdGetNameVersion", tkeyclient.CmdLen1}
@@ -49,19 +65,76 @@ type RandomGen struct {
 	tk *tkeyclient.TillitisKey // A connection to a TKey
 }
 
-// New allocates a struct for communicating with the random app
-// running on the TKey. You're expected to pass an existing connection
-// to it, so use it like this:
+func (r RandomGen) isFirmwareMode() (bool, error) {
+	nameVer, err := r.tk.GetNameVersion()
+	if err != nil {
+		if !errors.Is(err, io.EOF) && !errors.Is(err, tkeyclient.ErrResponseStatusNotOK) {
+			return false, fmt.Errorf("%w", err)
+		}
+
+		return false, nil
+	}
+
+	// not caring about nameVer.Version
+	return nameVer.Name0 == wantFWName0 &&
+		nameVer.Name1 == wantFWName1, nil
+}
+
+func (r RandomGen) isWantedApp() (bool, error) {
+	nameVer, err := r.GetAppNameVersion()
+	if err != nil {
+		if !errors.Is(err, io.EOF) {
+			return false, fmt.Errorf("%w", err)
+		}
+		return false, nil
+	}
+	// not caring about nameVer.Version
+	return nameVer.Name0 == wantAppName0 &&
+		nameVer.Name1 == wantAppName1, nil
+}
+
+func (r RandomGen) loadApp(USS []byte) error {
+	isFirmware, err := r.isFirmwareMode()
+	if err != nil {
+		return err
+	}
+
+	if isFirmware {
+		if err := r.tk.LoadApp(appBinary, USS); err != nil {
+			return fmt.Errorf("%w", err)
+		}
+	}
+
+	rightApp, err := r.isWantedApp()
+	if err != nil {
+		return err
+	}
+
+	if !rightApp {
+		return fmt.Errorf("wrong app running")
+	}
+
+	return nil
+}
+
+// New loads the random-generator device app and provides functions to
+// communicate with. You're expected to pass an existing TKey connection to
+// it, so use it like this:
 //
 //	tk := tkeyclient.New()
 //	err := tk.Connect(port)
 //	randomGen := New(tk)
-func New(tk *tkeyclient.TillitisKey) RandomGen {
-	var randomGen RandomGen
+func New(tk *tkeyclient.TillitisKey) (RandomGen, error) {
+	randomGen := RandomGen{
+		tk: tk,
+	}
 
-	randomGen.tk = tk
+	err := randomGen.loadApp([]byte{})
+	if err != nil {
+		return RandomGen{}, fmt.Errorf("couldn't load app: %w", err)
+	}
 
-	return randomGen
+	return randomGen, nil
 }
 
 // Close closes the connection to the TKey

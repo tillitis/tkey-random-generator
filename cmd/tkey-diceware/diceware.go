@@ -16,7 +16,6 @@ import (
 
 func main() {
 	wordsN := flag.Int("words", 7, "Number of words to generate")
-
 	flag.Parse()
 
 	tkeyclient.SilenceLogging()
@@ -31,11 +30,15 @@ func main() {
 
 	fmt.Printf("Connecting to device on serial port %s...\n", devPath)
 	if err := tk.Connect(devPath, tkeyclient.WithSpeed(tkeyclient.SerialSpeed)); err != nil {
-		fmt.Printf("could not open %s: %w", devPath, err)
+		fmt.Printf("could not open %s: %v\n", devPath, err)
 		os.Exit(1)
 	}
 
-	gen := generator.New(tk)
+	gen, err := generator.New(tk)
+	if err != nil {
+		fmt.Printf("couldn't load random generator app: %v\n", err)
+		os.Exit(1)
+	}
 
 	r := reader.New(gen)
 
@@ -46,12 +49,14 @@ func main() {
 
 	diceGen, err := diceware.NewGenerator(&genInput)
 	if err != nil {
-		panic(err)
+		fmt.Printf("couldn't initialize diceware: %v\n", err)
+		os.Exit(1)
 	}
 
 	words, err := diceGen.Generate(*wordsN)
 	if err != nil {
-		panic(err)
+		fmt.Printf("couldn't throw dice: %v\n", err)
+		os.Exit(1)
 	}
 
 	for _, word := range words {
