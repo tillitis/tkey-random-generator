@@ -1,9 +1,10 @@
 module tkey-random-generator
 
-go 1.21
+go 1.22
 
 require (
 	github.com/dustin/go-humanize v1.0.1
+	github.com/sethvargo/go-diceware v0.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/tillitis/tkeyclient v1.1.0
 	github.com/tillitis/tkeyutil v0.0.9
