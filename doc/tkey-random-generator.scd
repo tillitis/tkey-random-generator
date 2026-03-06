@@ -42,6 +42,11 @@ Output can be chosen between stdout (in hexadecimal) or a binary file.
 
 	Output random data as binary to FILE.
 
+*--force-full-uss*
+
+	Force the use of a full 32 byte USS digest. For backwards compatibility
+	the default is 31 bytes.
+
 *-p*, *--port PATH*
 
 	Set serial port device PATH. If this is not passed, auto-detection

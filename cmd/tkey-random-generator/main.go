@@ -40,7 +40,7 @@ var version string
 func main() {
 	var fileUSS, devPath, filePath, fileRandData, fileSignature, filePubkey string
 	var speed, genBytes int
-	var enterUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary, versionOnly bool
+	var enterUSS, forceFullUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary, versionOnly bool
 
 	genString := "generate"
 	verifyString := "verify"
@@ -94,6 +94,8 @@ Flags:`, os.Args[0])
 		"Enable typing of a phrase to be hashed as the User Supplied Secret. The USS is loaded onto the TKey along with the app itself. A different USS results in different Compound Device Identifier, different start of the random sequence, and another key pair used for signing.")
 	cmdGen.StringVar(&fileUSS, "uss-file", "",
 		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
+	cmdGen.BoolVar(&forceFullUSS, "force-full-uss", false,
+		"Use 32 byte USS digest. Default is 31.")
 	cmdGen.BoolVarP(&verbose, "verbose", "v", false, "Be more verbose")
 	cmdGen.Usage = func() {
 		desc := fmt.Sprintf(`Usage %[1]s generate <bytes> [-s] [--uss] [flags..]
@@ -188,7 +190,7 @@ Flags:`, os.Args[0])
 			os.Exit(2)
 		}
 
-		err = generate(devPath, enterUSS, fileUSS, speed, genBytes, filePath, shouldSign, verbose)
+		err = generate(devPath, enterUSS, fileUSS, forceFullUSS, speed, genBytes, filePath, shouldSign, verbose)
 		if err != nil {
 			le.Printf("Error generating random data: %v\n", err)
 			os.Exit(1)
@@ -236,7 +238,7 @@ Flags:`, os.Args[0])
 }
 
 // subcommand to generate random data
-func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes int, filePath string, shouldSign bool, verbose bool) error {
+func generate(devPath string, enterUSS bool, fileUSS string, forceFullUSS bool, speed int, genBytes int, filePath string, shouldSign bool, verbose bool) error {
 	tkeyclient.SilenceLogging()
 
 	if devPath == "" {
@@ -249,7 +251,18 @@ func generate(devPath string, enterUSS bool, fileUSS string, speed int, genBytes
 
 	tk := tkeyclient.New()
 	le.Printf("Connecting to device on serial port %s...\n", devPath)
-	if err := tk.Connect(devPath, tkeyclient.WithSpeed(speed)); err != nil {
+
+	options := []func(*tkeyclient.TillitisKey){}
+
+	if speed != 0 {
+		options = append(options, tkeyclient.WithSpeed(speed))
+	}
+
+	if forceFullUSS {
+		options = append(options, tkeyclient.WithFullUss())
+	}
+
+	if err := tk.Connect(devPath, options...); err != nil {
 		return fmt.Errorf("could not open %s: %w", devPath, err)
 	}
 
