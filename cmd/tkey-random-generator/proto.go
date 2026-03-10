@@ -83,7 +83,7 @@ func (s RandomGen) GetAppNameVersion() (*tkeyclient.NameVersion, error) {
 
 	tkeyclient.Dump("GetAppNameVersion tx", tx)
 	if err = s.tk.Write(tx); err != nil {
-		return nil, fmt.Errorf("Write: %w", err)
+		return nil, fmt.Errorf("write: %w", err)
 	}
 
 	defer s.tk.SetReadTimeoutNoErr(0)
@@ -115,7 +115,7 @@ func (s RandomGen) GetRandom(bytes int) ([]byte, error) {
 	tx[2] = byte(bytes)
 	tkeyclient.Dump("GetRandom tx", tx)
 	if err = s.tk.Write(tx); err != nil {
-		return nil, fmt.Errorf("Write: %w", err)
+		return nil, fmt.Errorf("write: %w", err)
 	}
 
 	rx, _, err := s.tk.ReadFrame(rspGetRandom, id)
@@ -146,7 +146,7 @@ func (s RandomGen) GetPubkey() ([]byte, error) {
 
 	tkeyclient.Dump("GetPubkey tx", tx)
 	if err = s.tk.Write(tx); err != nil {
-		return nil, fmt.Errorf("Write: %w", err)
+		return nil, fmt.Errorf("write: %w", err)
 	}
 
 	rx, _, err := s.tk.ReadFrame(rspGetPubkey, id)
@@ -170,7 +170,7 @@ func (s RandomGen) GetSignature() ([]byte, []byte, error) {
 
 	tkeyclient.Dump("GetSig tx", tx)
 	if err = s.tk.Write(tx); err != nil {
-		return nil, nil, fmt.Errorf("Write: %w", err)
+		return nil, nil, fmt.Errorf("write: %w", err)
 	}
 
 	rx, _, err := s.tk.ReadFrame(rspCmdSig, id)
