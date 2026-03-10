@@ -105,7 +105,7 @@ EOF
 done
 
 podman run --rm -it --mount "type=bind,source=$(pwd),target=/build" -w /build \
-       ghcr.io/tillitis/tkey-builder:2 ./buildall
+       ghcr.io/tillitis/tkey-builder:5rc2 ./buildall
 rm -f buildall
 
 cd "$outd"
