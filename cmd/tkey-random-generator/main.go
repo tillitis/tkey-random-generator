@@ -186,8 +186,8 @@ Flags:`, os.Args[0])
 
 		var err error
 		genBytes, err = strconv.Atoi(cmdGen.Args()[0])
-		if err != nil {
-			le.Printf("Argument needs to be integer.\n\n")
+		if err != nil || genBytes < 1 {
+			le.Printf("Argument needs to be an integer larger than 0.\n\n")
 			cmdGen.Usage()
 			os.Exit(2)
 		}
@@ -385,6 +385,10 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string, verbose b
 	var file *os.File
 	var fileErr error
 	var toFile bool
+
+	if genBytes < 0 {
+		return nil, fmt.Errorf("can't generate negative amount of bytes")
+	}
 
 	if filePath != "" {
 		toFile = true
