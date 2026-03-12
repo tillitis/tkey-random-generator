@@ -174,62 +174,75 @@ The `random-generator` device app embedded into
 `tkey-random-generator` is built from
 https://github.com/tillitis/tkey-random-generator tag v0.0.2.
 
-## Building
+## Building & installing
 
-You have two options for build tools: either use our OCI image
-`ghcr.io/tillitis/tkey-builder` or native tools.
+### Default `tkey-random-generator`
 
-With native tools you should be able to use our build script:
-
-```
-$ ./build.sh
-```
-
-which also clones and builds the TKey device
-libraries: https://github.com/tillitis/tkey-libs
-
-If you want to do it manually please inspect the build script, but
-basically you clone `tkey-libs` next to this folder, build it, and
-then build this application using `make`
-
-Something like this:
+Install with:
 
 ```
-$ git clone -b v0.0.2 --depth 1 https://github.com/tillitis/tkey-libs
-$ cd tkey-libs
-$ make
+go install github.com/tillitis/tkey-random-generator/cmd/tkey-random-generator@latest
 ```
 
-navigate back to this folder and run:
+Building locally:
 
 ```
 make
 ```
 
-If you cloned `tkey-libs` to somewhere else then the default, set
-`LIBDIR` to the path of the directory.
+**NOTE WELL**: This gives you the pre-compiled `random-generator`
+device app embedded in the client app. See below if you want the
+development version of the device app.
 
+See also `make menu` for a list of targets.
+
+### Building during development
+
+You have two options for build tools: either use our OCI image
+`ghcr.io/tillitis/tkey-builder` or native tools.
+
+An easy way to build is to use the provided scripts:
+
+- `build.sh` for native tools.
+- `build-podman.sh` for use with Podman.
+
+These scripts automatically clone the [tkey-libs device
+libraries](https://github.com/tillitis/tkey-libs) in a directory next
+to this one.
+
+If you want to compile manually, see the `make menu`.
+
+### Make variables
+
+- `LIBDIR`: If you cloned `tkey-libs` to somewhere else then the
+   default, set to the path of the directory.
+- `OBJCOPY`: If your `objcopy` is called something else than
+  `llvm-objcopy`
+  
 Please see [Tools & libraries](https://dev.tillitis.se/tools/) in the Development Handbook
 for detailed information on the currently supported build and development environment.
 
-### Building with Podman
+### Building with another `random-generator`
 
-We provide an OCI image with all the tools needed to build both `tkey-libs`
-and this application. If you have `make` and Podman installed you can use it
-for the `tkey-libs` directory and then this directory:
+For convenience, and to be able to support `go install`, a precompiled
+`random-generator` binary is included under
+`cmd/tkey-random-generator/`.
 
-```
-make podman
-```
+If you want to change the included device app chose to use the
+development target documented above under [Building during
+development](#building-during-development) or, if you want to change
+it more permantly for a release:
 
-and everything should be built. This assumes a working rootless
-podman. On Ubuntu 22.10, running
-
-```
-apt install podman rootlesskit slirp4netns
-```
-
-should be enough to get you a working Podman setup.
+1. Compile your own `random-generator` and place it in the
+   `cmd/tkey-random-generator/` directory with a descriptive name,
+   something like `random-generator.bin-v0.0.2`.
+2. Change the path to the embedded binary in
+   `cmd/tkey-random-generator/appbinary.go`. Look for `go:embed...`.
+4. Compute a new SHA-512 hash digest for your binary, typically by
+   something like `sha512sum .bin-${signer_version}` and put the
+   resulting output in a file next to the binary with the suffix
+   `.sha512`.
+5. Add the digest file to the `make-check` make target.
 
 ## Licenses and SPDX tags
 
