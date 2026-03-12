@@ -6,7 +6,7 @@ package main
 import (
 	"bytes"
 	"crypto/ed25519"
-	_ "embed"
+	"crypto/sha512"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -25,11 +25,6 @@ import (
 	"github.com/tillitis/tkeyutil"
 	"golang.org/x/crypto/blake2s"
 )
-
-// nolint:typecheck // Avoid lint error when the embedding file is missing.
-//
-//go:embed random-generator.bin-v0.0.2
-var appBinary []byte
 
 const (
 	wantFWName0  = "tk1 "
@@ -152,6 +147,7 @@ Flags:`, os.Args[0])
 		}
 		if versionOnly {
 			fmt.Printf("tkey-random-generator %s\n", version)
+			fmt.Printf("Embedded device app:\n%s\nSHA512: %s\n", GetEmbeddedAppName(), GetEmbeddedAppDigest())
 			os.Exit(0)
 		}
 	}
@@ -553,4 +549,16 @@ func readBuildInfo() string {
 		version = sb.String()
 	}
 	return version
+}
+
+// GetEmbeddedAppName returns the name of the embedded device app.
+func GetEmbeddedAppName() string {
+	return appName
+}
+
+// GetEmbeddedAppDigest returns a string of the SHA512 digest for the embedded
+// device app
+func GetEmbeddedAppDigest() string {
+	digest := sha512.Sum512(appBinary)
+	return hex.EncodeToString(digest[:])
 }

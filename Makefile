@@ -31,7 +31,21 @@ else
 endif
 
 .PHONY: all
-all: tkey-random-generator random-generator/app.bin check-hash
+all: tkey-random-generator check-hash
+
+.PHONY: menu
+menu:
+	@echo "Targets:"
+	@echo "- tkey-random-generator: Builds a production tkey-random-generator with"
+	@echo "  tagged device app"
+	@echo "- check-hash: Check the checksum of the included binary app"
+	@echo "- tkey-random-generator-dev: Builds a dev version with random-generator"
+	@echo "  from this repo."
+	@echo "- podman: Same but in a container."
+	@echo "- random-generator/app.elf: Build just the device app (QEMU)."
+	@echo "- random-generator/app.bin: Build just the device app (TKey)."
+	@echo "- lint: Run local linting."
+	@echo "- clean: Cleans up."
 
 DESTDIR=/
 PREFIX=/usr/local
@@ -51,9 +65,7 @@ uninstall:
 
 .PHONY: podman
 podman:
-	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /tkey-libs -it ghcr.io/tillitis/tkey-builder:5rc2 make -j
-	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:5rc2 make -j
-
+	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:5rc2 make -j tkey-random-generator-dev
 
 # Turn elf into bin for device
 %.bin: %.elf
@@ -61,7 +73,6 @@ podman:
 	chmod a-x $@
 
 check-hash: random-generator/app.bin cmd/tkey-random-generator/random-generator.bin-v0.0.2
-	cd random-generator && $(shasum) -c app.bin.sha512
 	cd cmd/tkey-random-generator && $(shasum) -c random-generator.bin-v0.0.2.sha512
 
 # Random number generator app
@@ -84,11 +95,18 @@ checkfmt:
 
 TKEY_RANDOM_GENERATOR_VERSION ?= $(shell git describe --dirty --always | sed -n "s/^v\(.*\)/\1/p")
 
+cmd/tkey-random-generator/app.bin: random-generator/app.bin
+	cp random-generator/app.bin cmd/tkey-random-generator/app.bin
+
 # .PHONY to let go-build handle deps and rebuilds
 .PHONY: tkey-random-generator
 tkey-random-generator: cmd/tkey-random-generator/random-generator.bin-v0.0.2
 	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -o tkey-random-generator ./cmd/tkey-random-generator
 
+# .PHONY to let go-build handle deps and rebuilds
+.PHONY: tkey-random-generator-dev
+tkey-random-generator-dev: cmd/tkey-random-generator/app.bin
+	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -tags dev -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -o tkey-random-generator-dev ./cmd/tkey-random-generator
 
 doc/tkey-random-generator.1: doc/tkey-random-generator.scd
 	scdoc < $^ > $@
@@ -96,7 +114,8 @@ doc/tkey-random-generator.1: doc/tkey-random-generator.scd
 .PHONY: clean
 clean:
 	rm -f random-generator/app.bin random-generator/app.elf $(RANDOMOBJS) \
-	tkey-random-generator
+	cmd/tkey-random-generator/app.bin \
+	tkey-random-generator tkey-random-generator-dev
 
 
 .PHONY: lint

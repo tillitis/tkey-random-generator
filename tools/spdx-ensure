@@ -34,7 +34,6 @@ gotools/go.mod
 gotools/go.sum
 make-release-build-macos.sh
 make-release-build.sh
-random-generator/app.bin.sha512
 cmd/tkey-random-generator/random-generator.bin-v0.0.2
 cmd/tkey-random-generator/random-generator.bin-v0.0.2.sha512
 build.sh
