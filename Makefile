@@ -96,12 +96,10 @@ doc/tkey-random-generator.1: doc/tkey-random-generator.scd
 .PHONY: clean
 clean:
 	rm -f random-generator/app.bin random-generator/app.elf $(RANDOMOBJS) \
-	tkey-random-generator gotools/golangci-lint
+	tkey-random-generator
 
 
 .PHONY: lint
 lint:
-	$(MAKE) -C gotools
-	GOOS=linux   ./gotools/golangci-lint run
-	GOOS=windows ./gotools/golangci-lint run
-
+	GOOS=linux   golangci-lint run
+	GOOS=windows golangci-lint run
