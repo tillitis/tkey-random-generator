@@ -39,7 +39,7 @@ jobs:
           make
 
       - name: make
-        run: make LIBDIR=./tkey-libs
+        run: make LIBDIR=./tkey-libs tkey-random-generator-dev
 
       - name: check fmt of c code
         run: make checkfmt
