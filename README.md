@@ -168,6 +168,12 @@ the TKey. This is done automatically in `tkey-random-generator`.
 secure. If in doubt a user should always remove the TKey and insert it
 again before doing any operation.
 
+## Embedded device app
+
+The `random-generator` device app embedded into
+`tkey-random-generator` is built from
+https://github.com/tillitis/tkey-random-generator tag v0.0.2.
+
 ## Building
 
 You have two options for build tools: either use our OCI image

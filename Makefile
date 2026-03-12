@@ -31,7 +31,7 @@ else
 endif
 
 .PHONY: all
-all: random-generator/app.bin tkey-random-generator check-hash
+all: tkey-random-generator random-generator/app.bin check-hash
 
 DESTDIR=/
 PREFIX=/usr/local
@@ -49,7 +49,9 @@ uninstall:
 	$(destbin)/tkey-random-generator \
 	$(destman1)/tkey-random-generator.1.gz
 
+.PHONY: podman
 podman:
+	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /tkey-libs -it ghcr.io/tillitis/tkey-builder:5rc2 make -j
 	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:5rc2 make -j
 
 
@@ -58,8 +60,9 @@ podman:
 	$(OBJCOPY) --input-target=elf32-littleriscv --output-target=binary $^ $@
 	chmod a-x $@
 
-check-hash: random-generator/app.bin
+check-hash: random-generator/app.bin cmd/tkey-random-generator/random-generator.bin-v0.0.2
 	cd random-generator && $(shasum) -c app.bin.sha512
+	cd cmd/tkey-random-generator && $(shasum) -c random-generator.bin-v0.0.2.sha512
 
 # Random number generator app
 RANDOMOBJS=random-generator/main.o random-generator/app_proto.o random-generator/rng.o random-generator/blake2s/blake2s.o
@@ -83,8 +86,7 @@ TKEY_RANDOM_GENERATOR_VERSION ?= $(shell git describe --dirty --always | sed -n 
 
 # .PHONY to let go-build handle deps and rebuilds
 .PHONY: tkey-random-generator
-tkey-random-generator: random-generator/app.bin
-	cp -af random-generator/app.bin cmd/tkey-random-generator/app.bin
+tkey-random-generator: cmd/tkey-random-generator/random-generator.bin-v0.0.2
 	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -o tkey-random-generator ./cmd/tkey-random-generator
 
 
@@ -94,7 +96,7 @@ doc/tkey-random-generator.1: doc/tkey-random-generator.scd
 .PHONY: clean
 clean:
 	rm -f random-generator/app.bin random-generator/app.elf $(RANDOMOBJS) \
-	tkey-random-generator cmd/tkey-random-generator/app.bin gotools/golangci-lint
+	tkey-random-generator gotools/golangci-lint
 
 
 .PHONY: lint
