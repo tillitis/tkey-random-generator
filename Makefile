@@ -101,12 +101,12 @@ cmd/tkey-random-generator/app.bin: random-generator/app.bin
 # .PHONY to let go-build handle deps and rebuilds
 .PHONY: tkey-random-generator
 tkey-random-generator: cmd/tkey-random-generator/random-generator.bin-v0.0.2
-	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -o tkey-random-generator ./cmd/tkey-random-generator
+	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -buildvcs=false -o tkey-random-generator ./cmd/tkey-random-generator
 
 # .PHONY to let go-build handle deps and rebuilds
 .PHONY: tkey-random-generator-dev
 tkey-random-generator-dev: cmd/tkey-random-generator/app.bin
-	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -tags dev -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -o tkey-random-generator-dev ./cmd/tkey-random-generator
+	CGO_ENABLED=$(BUILD_CGO_ENABLED) go build -tags dev -ldflags "-X main.version=$(TKEY_RANDOM_GENERATOR_VERSION)" -trimpath -buildvcs=false -o tkey-random-generator-dev ./cmd/tkey-random-generator
 
 doc/tkey-random-generator.1: doc/tkey-random-generator.scd
 	scdoc < $^ > $@
