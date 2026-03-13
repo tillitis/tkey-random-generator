@@ -46,7 +46,7 @@ os=darwin
 for arch in "amd64" "arm64"
 do
     printf "Building $version for $os $arch\n"
-    make GOOS=$os GOARCH=$arch BUILD_CGO_ENABLED=1 tkey-random-generator
+    make GOOS=$os GOARCH=$arch BUILD_CGO_ENABLED=1 TKEY_RANDOM_GENERATOR_VERSION="$version" tkey-random-generator
     target="$outd/${exec_name}_${version}_$os-$arch$suffix"
 
     cp tkey-random-generator $target

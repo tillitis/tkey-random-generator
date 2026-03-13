@@ -49,7 +49,7 @@ do
     for arch in "amd64" "arm64"
     do
         printf "Building $version for $os $arch\n"
-        make GOOS=$os GOARCH=$arch BUILD_CGO_ENABLED=0 tkey-random-generator
+        make GOOS=$os GOARCH=$arch BUILD_CGO_ENABLED=0 TKEY_RANDOM_GENERATOR_VERSION="$version" tkey-random-generator
         if [ $os = "windows" ]
         then
             suffix=".exe"
