@@ -13,4 +13,4 @@ fi
 
 make -j -C ../tkey-libs
 
-make -j tkey-random-generator-dev
+make -j tkey-random-generator tkey-random-generator-dev
