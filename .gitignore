@@ -4,3 +4,4 @@
 *.elf
 /gotools/go-winres
 /tkey-random-generator
+/tkey-random-generator-dev
