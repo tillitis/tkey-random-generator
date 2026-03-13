@@ -65,7 +65,7 @@ uninstall:
 
 .PHONY: podman
 podman:
-	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:5rc2 make -j tkey-random-generator-dev
+	podman run --rm --mount type=bind,source=$(CURDIR),target=/src --mount type=bind,source=$(CURDIR)/../tkey-libs,target=/tkey-libs -w /src -it ghcr.io/tillitis/tkey-builder:5rc2 make -j
 
 # Turn elf into bin for device
 %.bin: %.elf
