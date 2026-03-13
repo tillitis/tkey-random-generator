@@ -16,7 +16,7 @@ jobs:
       image: ghcr.io/tillitis/tkey-builder:5rc2
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           # fetch-depth: 0
           persist-credentials: false
@@ -26,11 +26,11 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: build
-        run: ./build.sh
-
       - name: check fmt of c code
         run: make checkfmt
 
       - name: check for SPDX tags
         run: ./tools/spdx-ensure
+
+      - name: build
+        run: ./build.sh
