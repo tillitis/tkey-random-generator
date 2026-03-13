@@ -72,7 +72,7 @@ podman:
 	$(OBJCOPY) --input-target=elf32-littleriscv --output-target=binary $^ $@
 	chmod a-x $@
 
-check-hash: random-generator/app.bin cmd/tkey-random-generator/random-generator.bin-v0.0.2
+check-hash: cmd/tkey-random-generator/random-generator.bin-v0.0.2
 	cd cmd/tkey-random-generator && $(shasum) -c random-generator.bin-v0.0.2.sha512
 
 # Random number generator app
