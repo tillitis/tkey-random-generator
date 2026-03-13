@@ -1,5 +1,39 @@
 # Release notes
 
+## v0.0.3
+
+- Update tkeyclient version because of a vulnerability leaving some
+  USSs unused. Keys might have changed since earlier versions! Read
+  more here:
+
+  https://github.com/tillitis/tkeyclient/security/advisories/GHSA-4w7r-3222-8h6v
+
+  The error is only triggered if you use `tkey-random-generator` with
+  the `--uss` or `--uss-file` flags and an affected USS. An affected
+  USS hashes to a digest with a 0 (zero) in the first byte.
+
+  Follow these steps to identify if you are affected:
+
+  1. Run `tkey-random-generator generate -s --uss 1` which forces the
+     use of a USS.
+  2. Type in your USS.
+  3. Note the public key that is printed.
+  4. Remove and reinsert the TKey.
+  5. Run `tkey-random-generator generate -s 1`, signing without a USS.
+  6. Compare the public key output from both commands. If they are the
+     same your USS is vulnerable.
+
+  If your USS are affected, you have three options:
+
+  1. Not using a USS and keep your signing keys.
+  2. Keep using the USS and get new signing keys.
+  3. Use another USS and get new signing keys.
+
+- Add a new option flag: `--force-full-uss` to force full use of the
+  32 byte USS digest.
+
+[Complete changelog](https://github.com/tillitis/tkey-random-generator/compare/v0.0.2...v0.0.3).
+
 ## v0.0.2
 
 This version has multiple improvements and new features. One is the
