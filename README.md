@@ -100,7 +100,7 @@ Store the random data, the signature and the public key printed and run
 ```
 $ tkey-random-generator verify random_data_file signature_file public_key_file
 ```
-in order to verify previosuly generated data.
+in order to verify previously generated data.
 
 Please see the [Developer
 Handbook](https://dev.tillitis.se/tools/#qemu) for [how to run with
@@ -154,13 +154,13 @@ Typical use by a client application:
    start talking the protocol depicted above.
 4. Send `CMD_GET_RANDOM` with wanted number of bytes as argument to
    generated and retrieve random data.
-5. Repeat step 4 until wanted amount of random data is recieved.
+5. Repeat step 4 until wanted amount of random data is received.
 6. Send `CMD_GET_SIG` to calculate and get the signature and hash.
 8. Send `CMD_GET_PUBKEY` to receive the public key. If the public
    key is already stored, check against it so it's the expected TKey.
 
 **Please note**: `CMD_GET_SIG` should always be sent after the last
-random data response is recieved. This is in order to prevent old hash
+random data response is received. This is in order to prevent old hash
 data to be include if one fetches more random data without resetting
 the TKey. This is done automatically in `tkey-random-generator`.
 
@@ -228,10 +228,10 @@ For convenience, and to be able to support `go install`, a precompiled
 `random-generator` binary is included under
 `cmd/tkey-random-generator/`.
 
-If you want to change the included device app chose to use the
+If you want to change the included device app, choose to use the
 development target documented above under [Building during
 development](#building-during-development) or, if you want to change
-it more permantly for a release:
+it more permanently for a release:
 
 1. Compile your own `random-generator` and place it in the
    `cmd/tkey-random-generator/` directory with a descriptive name,
