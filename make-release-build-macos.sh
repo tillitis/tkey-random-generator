@@ -47,10 +47,10 @@ for arch in "amd64" "arm64"
 do
     printf "Building $version for $os $arch\n"
     make GOOS=$os GOARCH=$arch BUILD_CGO_ENABLED=1 TKEY_RANDOM_GENERATOR_VERSION="$version" tkey-random-generator
-    target="$outd/${exec_name}_${version}_$os-$arch$suffix"
+    target="${exec_name}_${version}_$os-$arch$suffix"
 
-    cp tkey-random-generator $target
-    sha512sum "$target" >"$target.sha512"
+    cp tkey-random-generator "$outd/$target"
+    (cd "$outd" && sha512sum "$target" >"$target.sha512")
 
 done
 
@@ -58,11 +58,11 @@ done
 # binary
 make -s -C gotools lipo
 
-universaltarget="$outd/${exec_name}_${version}_darwin-universal"
-./gotools/lipo -output "$universaltarget" -create \
+universaltarget="${exec_name}_${version}_darwin-universal"
+./gotools/lipo -output "$outd/$universaltarget" -create \
                "$outd/${exec_name}_${version}_darwin-amd64" \
                "$outd/${exec_name}_${version}_darwin-arm64"
-sha512sum "$universaltarget" >"$universaltarget.sha512"
+(cd "$outd" && sha512sum "$universaltarget" >"$universaltarget.sha512")
 
 set -x
 ls -l "$outd"

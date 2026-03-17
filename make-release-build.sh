@@ -56,9 +56,10 @@ do
         else
             suffix=""
         fi
-        target="$outd/${exec_name}_${version}_$os-$arch$suffix"
-        cp tkey-random-generator $target
-        sha512sum "$target" >"$target.sha512"
+        target="${exec_name}_${version}_$os-$arch$suffix"
+
+        cp tkey-random-generator "$outd/$target"
+        (cd "$outd" && sha512sum "$target" >"$target.sha512")
     done
 done
 
