@@ -1,5 +1,16 @@
 # Release notes
 
+## v0.0.4
+
+- Update tkeyclient to v1.3.1 to handle TKey Unlocked (product ID 8)
+  as a Bellatrix when it comes to USS digest handling.
+
+- Only allow `--force-full-uss` when either `--uss` or `--uss-file` is
+  used.
+
+Full
+[changelog](https://github.com/tillitis/tkey-random-generator/compare/v0.0.3...v0.0.4).
+
 ## v0.0.3
 
 - Update tkeyclient version because of a vulnerability leaving some
