@@ -174,6 +174,12 @@ Flags:`, os.Args[0])
 			os.Exit(2)
 		}
 
+		if forceFullUSS && fileUSS == "" != enterUSS {
+			le.Printf("--force-full-uss unusable unless you also specify --uss or --uss-file.\n\n")
+			cmdGen.Usage()
+			os.Exit(2)
+		}
+
 		if cmdGen.NArg() < 1 {
 			le.Printf("Bytes to generate required.\n\n")
 			cmdGen.Usage()

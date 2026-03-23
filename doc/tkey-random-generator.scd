@@ -47,6 +47,8 @@ Output can be chosen between stdout (in hexadecimal) or a binary file.
 	Force the use of a full 32 byte USS digest. For backwards compatibility
 	the default is 31 bytes.
 
+	Only usable with *--uss* or *--uss-file*.
+
 *-p*, *--port PATH*
 
 	Set serial port device PATH. If this is not passed, auto-detection
