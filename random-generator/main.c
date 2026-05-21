@@ -19,6 +19,8 @@ static volatile uint32_t *cpu_mon_first = (volatile uint32_t *) TK1_MMIO_TK1_CPU
 static volatile uint32_t *cpu_mon_last  = (volatile uint32_t *) TK1_MMIO_TK1_CPU_MON_LAST;
 static volatile uint32_t *app_addr  	= (volatile uint32_t *) TK1_MMIO_TK1_APP_ADDR;
 static volatile uint32_t *app_size 	= (volatile uint32_t *) TK1_MMIO_TK1_APP_SIZE;
+static volatile uint32_t *trng_status =  (volatile uint32_t *)TK1_MMIO_TRNG_STATUS;
+static volatile uint32_t *trng_entropy = (volatile uint32_t *)TK1_MMIO_TRNG_ENTROPY;
 
 #define LED_BLACK  0
 #define LED_RED    (1 << TK1_MMIO_TK1_LED_R_BIT)
@@ -36,7 +38,15 @@ const uint8_t app_name1[4] = "rand";
 const uint32_t app_version = 0x00000001;
 
 // RSP_GET_RANDOM_cmdlen - (responsecode + status)
-#define RANDOM_PAYLOAD_MAXBYTES 128 - (1 + 1)
+// #define RANDOM_PAYLOAD_MAXBYTES 128 - (1 + 1)
+#define RANDOM_PAYLOAD_MAXBYTES 120
+
+static uint32_t entropy_get()
+{
+	while ((*trng_status & (1 << TK1_MMIO_TRNG_STATUS_READY_BIT)) == 0) {
+	}
+	return *trng_entropy;
+}
 
 int main(void)
 {
@@ -112,6 +122,7 @@ int main(void)
 		memset(rsp, 0, CMDLEN_MAXBYTES);
 
 		// Min length is 1 byte so this should always be here
+		uint8_t bytes = 0;
 		switch (cmd[0]) {
 		case APP_CMD_GET_NAMEVERSION:
 			// qemu_puts("APP_CMD_GET_NAMEVERSION\n");
@@ -124,6 +135,37 @@ int main(void)
 			appreply(hdr, APP_RSP_GET_NAMEVERSION, rsp);
 			break;
 
+		case APP_CMD_GET_ENTROPY:
+			// qemu_puts("APP_CMD_GET_RANDOM\n");
+			if (hdr.len != 4) {
+				// qemu_puts(
+				// "APP_CMD_GET_RANDOM bad cmd length\n");
+				break;
+			}
+
+			// cmd[1] is number of bytes requested
+			bytes = cmd[1];
+			if (bytes < 1 || bytes > RANDOM_PAYLOAD_MAXBYTES) {
+				// qemu_puts("Requested bytes outside range\n");
+				rsp[0] = STATUS_BAD;
+				appreply(hdr, APP_RSP_GET_ENTROPY, rsp);
+				break;
+			}
+			rsp[0] = STATUS_OK;
+			uint32_t *buffer = (uint32_t *)rsp + 1;
+			uint8_t words = bytes / 4; // words
+			for (uint8_t i = 0; i < words; i++) {
+				buffer[i] = entropy_get();
+			}
+			// rsp[8] = entropy_get();
+
+			// memcpy(rsp + 1, digest, bytes);
+			appreply(hdr, APP_RSP_GET_ENTROPY, rsp);
+
+			rand_data_generated = 1;
+
+			break;
+
 		case APP_CMD_GET_RANDOM:
 			// qemu_puts("APP_CMD_GET_RANDOM\n");
 			if (hdr.len != 4) {
@@ -133,7 +175,7 @@ int main(void)
 			}
 
 			// cmd[1] is number of bytes requested
-			uint8_t bytes = cmd[1];
+			bytes = cmd[1];
 			if (bytes < 1 || bytes > RANDOM_PAYLOAD_MAXBYTES) {
 				// qemu_puts("Requested bytes outside range\n");
 				rsp[0] = STATUS_BAD;

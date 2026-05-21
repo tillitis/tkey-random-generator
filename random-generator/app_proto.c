@@ -27,6 +27,7 @@ void appreply(struct frame_header hdr, enum appcmd rspcode, void *buf)
 		break;
 
 	case APP_RSP_GET_RANDOM:
+	case APP_RSP_GET_ENTROPY:
 		// len = LEN_128;
 		nbytes = 128;
 		break;

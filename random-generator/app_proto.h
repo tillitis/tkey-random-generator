@@ -17,6 +17,8 @@ enum appcmd {
 	APP_RSP_GET_PUBKEY      = 0x06,
 	APP_CMD_GET_SIG         = 0x07,
 	APP_RSP_GET_SIG         = 0x08,
+	APP_CMD_GET_ENTROPY         = 0x09,
+	APP_RSP_GET_ENTROPY         = 0x0a,
 
 	APP_RSP_UNKNOWN_CMD     = 0xff,
 };
