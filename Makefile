@@ -76,10 +76,10 @@ check-hash: cmd/tkey-random-generator/random-generator.bin-v0.0.2
 	cd cmd/tkey-random-generator && $(shasum) -c random-generator.bin-v0.0.2.sha512
 
 # Random number generator app
-RANDOMOBJS=random-generator/main.o random-generator/app_proto.o random-generator/rng.o random-generator/blake2s/blake2s.o
+RANDOMOBJS=random-generator/main.o random-generator/app_proto.o random-generator/rng.o random-generator/blake2s/blake2s.o random-generator/sha256/sha256.o
 random-generator/app.elf: $(RANDOMOBJS)
 	$(CC) $(CFLAGS) $(RANDOMOBJS) $(LDFLAGS) -L $(LIBDIR) -lmonocypher -o $@
-$(RANDOMOBJS): $(INCLUDE)/tkey/tk1_mem.h random-generator/app_proto.h random-generator/rng.h random-generator/blake2s/blake2s.h
+$(RANDOMOBJS): $(INCLUDE)/tkey/tk1_mem.h random-generator/app_proto.h random-generator/rng.h random-generator/blake2s/blake2s.h random-generator/sha256/sha256.h
 
 # Uses ../.clang-format
 FMTFILES=random-generator/*.[ch]
