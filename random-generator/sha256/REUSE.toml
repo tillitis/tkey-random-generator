@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2025 Tillitis AB <tillitis.se>
+# SPDX-License-Identifier: BSD-2-Clause
+
+version = 1
+
+[[annotations]]
+path = [
+     "sha256.c",
+     "sha256.h",
+     "README.md",
+]
+SPDX-FileCopyrightText = "NONE"
+SPDX-License-Identifier = "LicenseRef-Public-Domain"
