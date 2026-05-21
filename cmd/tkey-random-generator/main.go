@@ -40,7 +40,7 @@ var version string
 func main() {
 	var fileUSS, devPath, filePath, fileRandData, fileSignature, filePubkey string
 	var speed, genBytes int
-	var enterUSS, forceFullUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary, versionOnly bool
+	var enterUSS, forceFullUSS, helpOnlyGen, helpOnlyVerify, shouldSign, verbose, isBinary, versionOnly, onlyEntropy bool
 
 	genString := "generate"
 	verifyString := "verify"
@@ -92,6 +92,8 @@ Flags:`, os.Args[0])
 	cmdGen.BoolVarP(&helpOnlyGen, "help", "h", false, "Output this help.")
 	cmdGen.BoolVar(&enterUSS, "uss", false,
 		"Enable typing of a phrase to be hashed as the User Supplied Secret. The USS is loaded onto the TKey along with the app itself. A different USS results in different Compound Device Identifier, different start of the random sequence, and another key pair used for signing.")
+	cmdGen.BoolVar(&onlyEntropy, "onlyEntropy", false,
+		"Get entropy directly from trng.")
 	cmdGen.StringVar(&fileUSS, "uss-file", "",
 		"Read `FILE` and hash its contents as the USS. Use '-' (dash) to read from stdin. The full contents are hashed unmodified (e.g. newlines are not stripped).")
 	cmdGen.BoolVar(&forceFullUSS, "force-full-uss", false,
@@ -198,7 +200,7 @@ Flags:`, os.Args[0])
 			os.Exit(2)
 		}
 
-		err = generate(devPath, enterUSS, fileUSS, forceFullUSS, speed, genBytes, filePath, shouldSign, verbose)
+		err = generate(devPath, enterUSS, fileUSS, forceFullUSS, speed, genBytes, filePath, shouldSign, verbose, onlyEntropy)
 		if err != nil {
 			le.Printf("Error generating random data: %v\n", err)
 			os.Exit(1)
@@ -257,7 +259,7 @@ https://github.com/tillitis/tkey-random-generator/
 }
 
 // subcommand to generate random data
-func generate(devPath string, enterUSS bool, fileUSS string, forceFullUSS bool, speed int, genBytes int, filePath string, shouldSign bool, verbose bool) error {
+func generate(devPath string, enterUSS bool, fileUSS string, forceFullUSS bool, speed int, genBytes int, filePath string, shouldSign bool, verbose bool, onlyEntropy bool) error {
 	tkeyclient.SilenceLogging()
 
 	if devPath == "" {
@@ -304,7 +306,7 @@ func generate(devPath string, enterUSS bool, fileUSS string, forceFullUSS bool, 
 		return fmt.Errorf("the TKey may already be running an app, but not the expected. Please unplug and plug it in again")
 	}
 
-	totRandom, err := genRandomData(randomGen, genBytes, filePath, verbose)
+	totRandom, err := genRandomData(randomGen, genBytes, filePath, verbose, onlyEntropy)
 	if err != nil {
 		return fmt.Errorf("genRandomData failed: %w", err)
 	}
@@ -408,7 +410,7 @@ func loadApp(tk *tkeyclient.TillitisKey, enterUSS bool, fileUSS string) error {
 }
 
 // genRandomData fetches genBytes bytes of random data and either prints to a file or stdout
-func genRandomData(randomGen RandomGen, genBytes int, filePath string, verbose bool) ([]byte, error) {
+func genRandomData(randomGen RandomGen, genBytes int, filePath string, verbose bool, onlyEntropy bool) ([]byte, error) {
 	var totRandom []byte
 	var file *os.File
 	var fileErr error
@@ -416,6 +418,11 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string, verbose b
 
 	if genBytes < 0 {
 		return nil, fmt.Errorf("can't generate negative amount of bytes")
+	}
+
+	if genBytes%4 != 0 {
+		return nil, fmt.Errorf("Should be divisible by 4")
+
 	}
 
 	if filePath != "" {
@@ -442,11 +449,18 @@ func genRandomData(randomGen RandomGen, genBytes int, filePath string, verbose b
 		progressIncrements = 256
 	}
 	for {
+		var random []byte
+		var err error
+
 		get := left
 		if get > RandomPayloadMaxBytes {
 			get = RandomPayloadMaxBytes
 		}
-		random, err := randomGen.GetRandom(get)
+		if onlyEntropy {
+			random, err = randomGen.GetEntropy(get)
+		} else {
+			random, err = randomGen.GetRandom(get)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("GetRandom failed: %w", err)
 		}

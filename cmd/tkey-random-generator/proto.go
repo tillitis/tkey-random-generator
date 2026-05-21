@@ -18,10 +18,13 @@ var (
 	rspGetPubkey      = appCmd{0x06, "rspGetPubkey", tkeyclient.CmdLen128}
 	cmdGetSig         = appCmd{0x07, "cmdGetSig", tkeyclient.CmdLen1}
 	rspCmdSig         = appCmd{0x08, "rspCmdSig", tkeyclient.CmdLen128}
+	cmdGetEntropy     = appCmd{0x09, "cmdGetEntropy", tkeyclient.CmdLen4}
+	rspGetEntropy     = appCmd{0x0a, "rspGetEntropy", tkeyclient.CmdLen128}
 )
 
 // cmdlen - (responsecode + status)
-var RandomPayloadMaxBytes = rspGetRandom.CmdLen().Bytelen() - (1 + 1)
+// var RandomPayloadMaxBytes = rspGetRandom.CmdLen().Bytelen() - (1 + 1)
+var RandomPayloadMaxBytes = 120
 
 type appCmd struct {
 	code   byte
@@ -134,6 +137,42 @@ func (s RandomGen) GetRandom(bytes int) ([]byte, error) {
 	}
 	// Skipping frame header, app header, and status
 	return rx[3 : 3+ret], nil
+}
+
+// GetEntropy fetches random data.
+func (s RandomGen) GetEntropy(bytes int) ([]byte, error) {
+	if bytes < 1 || bytes > RandomPayloadMaxBytes {
+		return nil, fmt.Errorf("number of bytes is not in [1,%d]", RandomPayloadMaxBytes)
+	}
+
+	id := 2
+	tx, err := tkeyclient.NewFrameBuf(cmdGetEntropy, id)
+	if err != nil {
+		return nil, fmt.Errorf("NewFrameBuf: %w", err)
+	}
+
+	tx[2] = byte(bytes)
+	tkeyclient.Dump("GetEntropy tx", tx)
+	if err = s.tk.Write(tx); err != nil {
+		return nil, fmt.Errorf("write: %w", err)
+	}
+
+	rx, _, err := s.tk.ReadFrame(rspGetEntropy, id)
+	tkeyclient.Dump("GetEntropy rx", rx)
+	if err != nil {
+		return nil, fmt.Errorf("ReadFrame: %w", err)
+	}
+
+	if rx[2] != tkeyclient.StatusOK {
+		return nil, fmt.Errorf("GetEntropy NOK")
+	}
+
+	ret := RandomPayloadMaxBytes
+	if ret > bytes {
+		ret = bytes
+	}
+	// Skipping frame header, app header, and status
+	return rx[6 : 6+ret], nil
 }
 
 // GetPubkey fetches the public key of the signer.
