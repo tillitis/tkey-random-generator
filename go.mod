@@ -1,4 +1,4 @@
-module tkey-random-generator
+module github.com/tillitis/tkey-random-generator
 
 go 1.23.0
 
