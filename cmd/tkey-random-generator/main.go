@@ -246,14 +246,14 @@ Flags:`, os.Args[0])
 }
 
 func notice() {
-	fmt.Printf("--------------------------------------------------------------------------------\n")
-	fmt.Printf("tkey-random-generator %v\n", version)
-	fmt.Printf(`
+	le.Printf("--------------------------------------------------------------------------------\n")
+	le.Printf("tkey-random-generator %v\n", version)
+	le.Printf(`
 NOTE: Version v0.0.2 and earlier had a vulnerability. Your keys might
 have changed! Read more in the release notes RELEASE.md at
 https://github.com/tillitis/tkey-random-generator/
 `)
-	fmt.Printf("--------------------------------------------------------------------------------\n\n")
+	le.Printf("--------------------------------------------------------------------------------\n\n")
 }
 
 // subcommand to generate random data
